@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>VentureVerse | Insights</title>
+  <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}?v=3">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  {% include 'nav.html' %}
+  <main class="container">
+    <div class="page-header"><h1 class="animate-in">Prediction Insights</h1><p class="animate-in delay-1">Detailed analysis, recommendations, and prediction history.</p></div>
+    {% if prediction is not none %}
+    <div class="download-bar animate-in delay-1"><a href="{{ url_for('download_insights') }}" class="btn-outline">&#128196; Download as PDF</a></div>
+    <div class="insight-banner animate-in delay-1 {{ 'banner-success' if pred_label=='Success' else 'banner-failure' }}">
+      <div class="banner-score">{{ prediction }}%</div>
+      <div><div class="banner-label">Predicted: <strong>{{ pred_label }}</strong></div><div class="banner-sub">{{ insights|length }} factors analysed</div></div>
+    </div>
+    <div class="insights-grid">
+      {% for ins in insights %}
+      <div class="card insight-card animate-in delay-{{ (loop.index % 4) + 1 }} {{ ins.type }}">
+        <div class="insight-header"><span class="insight-icon">{{ ins.icon|safe }}</span><span class="insight-title">{{ ins.title }}</span><span class="insight-badge {{ ins.type }}">{% if ins.type=='positive' %}Strength{% elif ins.type=='negative' %}Risk{% elif ins.type=='action' %}Action{% else %}Note{% endif %}</span></div>
+        <p class="insight-text">{{ ins.text }}</p>
+      </div>
+      {% endfor %}
+    </div>
+    {% if history %}
+    <h2 class="section-heading animate-in" style="margin-top:44px;">Prediction History</h2>
+    <p class="section-sub animate-in delay-1">Your recent predictions.</p>
+    <div class="card animate-in delay-2" style="overflow-x:auto;">
+      <table class="history-table"><thead><tr><th>#</th><th>Score</th><th>Result</th><th>Funding</th><th>Rounds</th><th>Industry</th><th>State</th><th>Date & Time</th></tr></thead><tbody>
+        {% for h in history %}<tr><td>{{ loop.index }}</td><td><strong style="color:{{ '#10b981' if h.label=='Success' else '#ef4444' }}">{{ h.score }}%</strong></td><td><span class="table-badge {{ 'success' if h.label=='Success' else 'failure' }}">{{ h.label }}</span></td><td>${{ '{:,.0f}'.format(h.data.get('funding_total_usd','0')|float) }}</td><td>{{ h.data.get('funding_rounds','-') }}</td><td>{{ industry_map.get(h.data.get('category_code',''), h.data.get('category_code','-')) }}</td><td>{{ state_map.get(h.data.get('state_code',''), h.data.get('state_code','-')) }}</td><td>{{ h.date }}</td></tr>{% endfor %}
+      </tbody></table>
+    </div>
+    {% endif %}
+    {% else %}
+    <div class="card animate-in delay-2" style="text-align:center; padding:60px;"><div style="font-size:48px; margin-bottom:16px;">&#128161;</div><h2 style="margin:0 0 8px;">No Insights Yet</h2><p style="color:var(--slate-500); margin:0 0 20px;">Run a prediction first.</p><a href="{{ url_for('home') }}" class="btn-primary" style="display:inline-block;">Go to Predict &rarr;</a></div>
+    {% endif %}
+    <footer class="footer">VentureVerse &bull; University of Westminster</footer>
+  </main>
+  {% if prediction is not none %}{% include 'chatwidget.html' %}{% endif %}
+</body></html>

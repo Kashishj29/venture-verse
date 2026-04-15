@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>VentureVerse | Sign Up</title>
+  <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}?v=3">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <header class="topbar"><div class="container topbar-inner"><div class="brand"><div class="logo-mark"><div class="bar bar-1"></div><div class="bar bar-2"></div><div class="bar bar-3"></div></div><span class="brand-name">VentureVerse</span></div><div class="nav-links"><a class="nav-pill" href="{{ url_for('login') }}">Login</a><a class="btn-nav" href="{{ url_for('signup') }}">Sign Up</a></div></div></header>
+  <main class="container"><div class="auth-wrapper animate-in"><div class="auth-card"><div class="auth-header"><h2>Create Account</h2><p>Join VentureVerse to predict startup success</p></div>{% if error %}<div class="error">{{ error }}</div>{% endif %}<form action="{{ url_for('signup') }}" method="POST" class="auth-form"><div class="field"><label>Full Name</label><input type="text" name="full_name" placeholder="Your full name" required></div><div class="field"><label>Email Address</label><input type="email" name="email" placeholder="you@example.com" required></div><div class="field"><label>Password</label><input type="password" name="password" placeholder="Min 6 characters" required minlength="6"></div><div class="field"><label>Confirm Password</label><input type="password" name="confirm_password" placeholder="Re-enter password" required></div><button class="btn-submit" type="submit" style="margin-top:8px;">Create Account &rarr;</button></form><div class="auth-footer">Already have an account? <a href="{{ url_for('login') }}">Sign in</a></div></div></div></main>
+</body></html>
