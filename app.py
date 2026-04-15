@@ -257,9 +257,15 @@ def logout(): session.clear(); return redirect(url_for("home"))
 def home():
     if "user_id" not in session:
         return render_template("landing.html")
-    return render_template("index.html", prediction=None, pred_label=None, error=None,
+    return render_template("index.html", prediction=session.get("last_prediction"), pred_label=session.get("last_pred_label"), error=None,
         categories=CATEGORIES, states=STATES, state_map=STATE_MAP, industry_map=INDUSTRY_MAP,
-        form_data={}, risk_factors=None, user_name=session.get("user_name"), active_page="predict")
+        form_data=session.get("last_form_data", {}), risk_factors=session.get("last_risk_factors"), user_name=session.get("user_name"), active_page="predict")
+
+@app.route("/reset")
+def reset():
+    session.pop("last_prediction", None); session.pop("last_pred_label", None)
+    session.pop("last_form_data", None); session.pop("last_risk_factors", None)
+    return redirect(url_for("home"))
 
 @app.route("/predict", methods=["POST"])
 def predict():

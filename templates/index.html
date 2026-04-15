@@ -52,7 +52,7 @@
             <div class="field"><label>State</label><select name="state_code" required><option value="">Select state</option>{% for s in states %}<option value="{{ s }}" {% if form_data.get('state_code')==s %}selected{% endif %}>{{ state_map[s] }}</option>{% endfor %}</select></div>
             <div class="field"><label>Industry</label><select name="category_code" required><option value="">Select industry</option>{% for c in categories %}<option value="{{ c }}" {% if form_data.get('category_code')==c %}selected{% endif %}>{{ industry_map[c] }}</option>{% endfor %}</select></div>
           </div>
-          <div class="actions"><button class="btn-submit" type="submit">Predict Success &rarr;</button><a class="btn-ghost" href="/">Reset</a></div>
+          <div class="actions"><button class="btn-submit" type="submit">Predict Success &rarr;</button><a class="btn-ghost" href="{{ url_for('reset') }}">Reset</a></div>
         </form>
       </div>
       <div class="card animate-in delay-3">
