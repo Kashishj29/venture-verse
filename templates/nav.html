@@ -1,9 +1,9 @@
 <header class="topbar">
   <div class="container topbar-inner">
-    <div class="brand">
+    <a href="{{ url_for('home') }}" class="brand" style="text-decoration: none; color: inherit;">
       <div class="logo-mark"><div class="bar bar-1"></div><div class="bar bar-2"></div><div class="bar bar-3"></div></div>
       <span class="brand-name">VentureVerse</span>
-    </div>
+    </a>
     <div class="nav-links">
       {% if user_name %}<span class="user-badge">Hi, {{ user_name.split(' ')[0] }}</span>{% endif %}
       <a class="nav-pill {{ 'active' if active_page=='predict' }}" href="{{ url_for('home') }}">Predict</a>
