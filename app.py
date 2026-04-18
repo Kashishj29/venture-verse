@@ -272,6 +272,14 @@ def predict():
     if "user_id" not in session: return redirect(url_for("login"))
     try:
         form_data = {k: request.form.get(k, "") for k in request.form}
+        
+        required_fields = ['funding_total_usd', 'funding_rounds']
+        for field in required_fields:
+            if not form_data.get(field, "").strip():
+                return render_template("index.html", prediction=None, pred_label=None, error="All fields are required. Please complete the form.",
+                    categories=CATEGORIES, states=STATES, state_map=STATE_MAP, industry_map=INDUSTRY_MAP,
+                    form_data=form_data, risk_factors=None, user_name=session.get("user_name"), active_page="predict")
+
         proba = model.predict_proba(build_input_df(form_data))[0][1]
         pred_pct = round(proba * 100, 2)
         pred_label = "Success" if proba >= 0.5 else "Failure"
