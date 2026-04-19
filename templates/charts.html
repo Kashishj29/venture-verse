@@ -55,8 +55,8 @@
       <!-- ── Chart 1: Prediction Drivers (Polar Area) ──────── -->
       <!-- Shows each factor as a coloured segment sized by score -->
       <div class="card animate-in delay-1">
-        <div class="chart-title">Prediction Drivers</div>
-        <div class="chart-desc">Relative impact and strength of core prediction factors.</div>
+        <div class="chart-title" style="font-size:18px; color:var(--slate-900);">Prediction Drivers</div>
+        <div class="chart-desc" style="font-size:14px; color:var(--blue-600); font-weight:600;">Relative impact and strength of core prediction factors</div>
         <div class="chart-container">
           <canvas id="probChart"></canvas>
         </div>
@@ -65,38 +65,20 @@
       <!-- ── Chart 2: Radar Profile ────────────────────────── -->
       <!-- Spider/radar chart comparing your startup to an ideal benchmark -->
       <div class="card animate-in delay-2">
-        <div class="chart-title">Factor Radar Profile</div>
-        <div class="chart-desc">Your startup factors vs ideal benchmark.</div>
+        <div class="chart-title" style="font-size:18px; color:var(--slate-900);">Factor Radar Profile</div>
+        <div class="chart-desc" style="font-size:14px; color:var(--blue-600); font-weight:600;">Your startup factors vs ideal benchmark</div>
         <div class="chart-container">
           <canvas id="radarChart"></canvas>
         </div>
       </div>
 
-      <!-- ── Chart 3: Prediction Gauge ─────────────────────── -->
-      <!-- SVG circular gauge (same as on the predict page) -->
+      <!-- ── Chart 3: Success vs Risk Probability (Doughnut) ─── -->
+      <!-- Interactive doughnut chart comparing success vs risk -->
       <div class="card animate-in delay-3">
-        <div class="chart-title">Prediction Gauge</div>
-        <div class="chart-desc">Visual success probability meter.</div>
-        <div class="gauge-wrapper">
-          <div class="gauge-ring">
-            <svg width="180" height="180" viewBox="0 0 180 180">
-              <circle class="gauge-track" cx="90" cy="90" r="78"/>
-              <circle class="gauge-fill" cx="90" cy="90" r="78"
-                      stroke="{{ '#10b981' if pred_label=='Success' else '#ef4444' }}"
-                      stroke-dasharray="490"
-                      stroke-dashoffset="{{ 490 - (490 * prediction / 100) }}"/>
-            </svg>
-            <div class="gauge-center">
-              <div class="gauge-percent"
-                   style="color:{{ '#10b981' if pred_label=='Success' else '#ef4444' }}">
-                {{ prediction }}%
-              </div>
-              <div class="gauge-label">Success Probability</div>
-            </div>
-          </div>
-          <div class="pred-status {{ 'success' if pred_label=='Success' else 'failure' }}">
-            &#9679; {{ pred_label }}
-          </div>
+        <div class="chart-title" style="font-size:18px; color:var(--slate-900);">Probability Breakdown</div>
+        <div class="chart-desc" style="font-size:14px; color:var(--blue-600); font-weight:600;">Success vs Risk Probability</div>
+        <div class="chart-container">
+          <canvas id="doughnutChart"></canvas>
         </div>
       </div>
 
@@ -104,18 +86,32 @@
       <!-- Horizontal bars with green/amber/red colouring -->
       {% if risk_factors %}
       <div class="card animate-in delay-4">
-        <div class="chart-title">Factor Strength Bars</div>
-        <div class="chart-desc">Green = strong, Amber = moderate, Red = weak.</div>
+        <div class="chart-title" style="font-size:18px; color:var(--slate-900);">Factor Strength Bars</div>
+        <div class="chart-desc" style="font-size:14px; color:var(--blue-600); font-weight:600;">
+          <span style="color:var(--green);">&#9679; Strong</span> &nbsp;
+          <span style="color:var(--amber);">&#9679; Moderate</span> &nbsp;
+          <span style="color:var(--red);">&#9679; Weak</span>
+        </div>
         {% for rf in risk_factors %}
-          <div class="risk-bar-group">
-            <div class="risk-bar-label">
-              <span>{{ rf.factor }}</span>
-              <span style="color:{{ '#10b981' if rf.status=='strong' else ('#f59e0b' if rf.status=='moderate' else '#ef4444') }}">
+          <div class="risk-bar-group interactive-bar" style="cursor:pointer; padding:8px 10px; border-radius:10px; transition:all 0.2s;">
+            <div class="risk-bar-label" style="font-size:14px;">
+              <span style="font-weight:700; color:var(--slate-700);">{{ rf.factor }}</span>
+              <span style="font-weight:900; font-size:15px; color:{{ '#10b981' if rf.status=='strong' else ('#f59e0b' if rf.status=='moderate' else '#ef4444') }}">
                 {{ rf.score }}%
               </span>
             </div>
-            <div class="risk-bar-track">
+            <div class="risk-bar-track" style="height:12px;">
               <div class="risk-bar-fill {{ rf.status }}" style="width:{{ rf.score }}%"></div>
+            </div>
+            <!-- Tooltip that shows on hover -->
+            <div class="bar-tooltip" style="display:none; margin-top:6px; padding:8px 12px; border-radius:8px; background:var(--slate-900); color:white; font-size:12px; font-weight:500; line-height:1.4;">
+              {% if rf.status == 'strong' %}
+                &#10004; <strong>{{ rf.factor }}</strong> is a strength — this factor supports success.
+              {% elif rf.status == 'moderate' %}
+                &#9888; <strong>{{ rf.factor }}</strong> is moderate — there is room for improvement.
+              {% else %}
+                &#10060; <strong>{{ rf.factor }}</strong> is weak — priority area to improve.
+              {% endif %}
             </div>
           </div>
         {% endfor %}
@@ -290,7 +286,68 @@
         }
       }
     });
+
+    // ── Chart 3: Doughnut (Success vs Risk) ───────────────
+    // Shows the predicted success % vs the remaining risk %
+    new Chart(document.getElementById('doughnutChart'), {
+      type: 'doughnut',
+      data: {
+        labels: ['Success Probability', 'Risk / Failure Probability'],
+        datasets: [{
+          data: [{{ prediction }}, {{ 100 - prediction }}],
+          backgroundColor: [
+            'rgba(16, 185, 129, 0.85)', // Green for success
+            'rgba(239, 68, 68, 0.85)'   // Red for failure/risk
+          ],
+          borderWidth: 2,
+          borderColor: '#ffffff',
+          hoverOffset: 12
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '70%',
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: { padding: 20, usePointStyle: true, font: { size: 13, weight: 'bold' } }
+          },
+          tooltip: {
+            backgroundColor: '#0f172a',
+            padding: 14,
+            cornerRadius: 10,
+            callbacks: {
+              label: function(context) {
+                return ' ' + context.label + ': ' + context.raw + '%';
+              }
+            }
+          }
+        }
+      }
+    });
     {% endif %}
+  </script>
+
+  <!-- Interactive hover tooltips for the factor bars -->
+  <script>
+    // When you hover over a factor bar, show its tooltip pop-up
+    // and highlight the row with a light background
+    document.querySelectorAll('.interactive-bar').forEach(function(bar) {
+      var tooltip = bar.querySelector('.bar-tooltip');
+
+      bar.addEventListener('mouseenter', function() {
+        if (tooltip) tooltip.style.display = 'block';
+        bar.style.background = 'var(--slate-100)';
+        bar.style.transform = 'scale(1.01)';
+      });
+
+      bar.addEventListener('mouseleave', function() {
+        if (tooltip) tooltip.style.display = 'none';
+        bar.style.background = 'transparent';
+        bar.style.transform = 'scale(1)';
+      });
+    });
   </script>
 
   <!-- Include the floating chatbot widget -->
