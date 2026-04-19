@@ -1,42 +1,188 @@
+<!--
+  insights.html — VentureVerse Prediction Insights Page
+  ======================================================
+  Displays detailed analysis cards and a prediction history table.
+
+  Two main sections:
+    1. Insight Cards — colour-coded cards (green=strength, red=risk,
+       amber=note, blue=action) explaining what each factor means
+    2. History Table — shows the user's last 10 predictions with
+       score, result, funding, rounds, industry, state, and date
+
+  Also has a "Download as PDF" button that generates a report.
+
+  Jinja variables:
+    - prediction    : success percentage or None
+    - pred_label    : "Success" or "Failure"
+    - insights      : list of insight card dicts (title, icon, type, text)
+    - history       : list of past prediction dicts (score, label, data, date)
+    - state_map     : dict mapping state codes to full names
+    - industry_map  : dict mapping industry codes to display names
+    - user_name     : logged-in user's name
+    - active_page   : "insights"
+-->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>VentureVerse | Insights</title>
   <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}?v=3">
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
+
+  <!-- Shared navigation bar -->
   {% include 'nav.html' %}
+
   <main class="container">
-    <div class="page-header"><h1 class="animate-in">Prediction Insights</h1><p class="animate-in delay-1">Detailed analysis, recommendations, and prediction history.</p></div>
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!--  PAGE HEADER                                            -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <div class="page-header">
+      <h1 class="animate-in">Prediction Insights</h1>
+      <p class="animate-in delay-1">Detailed analysis, recommendations, and prediction history.</p>
+    </div>
+
     {% if prediction is not none %}
-    <div class="download-bar animate-in delay-1"><a href="{{ url_for('download_insights') }}" class="btn-outline">&#128196; Download as PDF</a></div>
-    <div class="insight-banner animate-in delay-1 {{ 'banner-success' if pred_label=='Success' else 'banner-failure' }}">
-      <div class="banner-score">{{ prediction }}%</div>
-      <div><div class="banner-label">Predicted: <strong>{{ pred_label }}</strong></div><div class="banner-sub">{{ insights|length }} factors analysed</div></div>
-    </div>
-    <div class="insights-grid">
-      {% for ins in insights %}
-      <div class="card insight-card animate-in delay-{{ (loop.index % 4) + 1 }} {{ ins.type }}">
-        <div class="insight-header"><span class="insight-icon">{{ ins.icon|safe }}</span><span class="insight-title">{{ ins.title }}</span><span class="insight-badge {{ ins.type }}">{% if ins.type=='positive' %}Strength{% elif ins.type=='negative' %}Risk{% elif ins.type=='action' %}Action{% else %}Note{% endif %}</span></div>
-        <p class="insight-text">{{ ins.text }}</p>
+
+      <!-- ═══════════════════════════════════════════════════════ -->
+      <!--  DOWNLOAD BUTTON — export insights as PDF               -->
+      <!-- ═══════════════════════════════════════════════════════ -->
+      <div class="download-bar animate-in delay-1">
+        <a href="{{ url_for('download_insights') }}" class="btn-outline">
+          &#128196; Download as PDF
+        </a>
       </div>
-      {% endfor %}
-    </div>
-    {% if history %}
-    <h2 class="section-heading animate-in" style="margin-top:44px;">Prediction History</h2>
-    <p class="section-sub animate-in delay-1">Your recent predictions.</p>
-    <div class="card animate-in delay-2" style="overflow-x:auto;">
-      <table class="history-table"><thead><tr><th>#</th><th>Score</th><th>Result</th><th>Funding</th><th>Rounds</th><th>Industry</th><th>State</th><th>Date & Time</th></tr></thead><tbody>
-        {% for h in history %}<tr><td>{{ loop.index }}</td><td><strong style="color:{{ '#10b981' if h.label=='Success' else '#ef4444' }}">{{ h.score }}%</strong></td><td><span class="table-badge {{ 'success' if h.label=='Success' else 'failure' }}">{{ h.label }}</span></td><td>${{ '{:,.0f}'.format(h.data.get('funding_total_usd','0')|float) }}</td><td>{{ h.data.get('funding_rounds','-') }}</td><td>{{ industry_map.get(h.data.get('category_code',''), h.data.get('category_code','-')) }}</td><td>{{ state_map.get(h.data.get('state_code',''), h.data.get('state_code','-')) }}</td><td>{{ h.date }}</td></tr>{% endfor %}
-      </tbody></table>
-    </div>
-    {% endif %}
+
+      <!-- ═══════════════════════════════════════════════════════ -->
+      <!--  PREDICTION BANNER                                      -->
+      <!--  Large coloured banner showing the score and result     -->
+      <!--  Green background for success, red for failure          -->
+      <!-- ═══════════════════════════════════════════════════════ -->
+      <div class="insight-banner animate-in delay-1 {{ 'banner-success' if pred_label=='Success' else 'banner-failure' }}">
+        <div class="banner-score">{{ prediction }}%</div>
+        <div>
+          <div class="banner-label">Predicted: <strong>{{ pred_label }}</strong></div>
+          <div class="banner-sub">{{ insights|length }} factors analysed</div>
+        </div>
+      </div>
+
+      <!-- ═══════════════════════════════════════════════════════ -->
+      <!--  INSIGHT CARDS GRID                                     -->
+      <!--  Each card has a coloured left border:                  -->
+      <!--    Green  = positive (strength)                         -->
+      <!--    Red    = negative (risk)                              -->
+      <!--    Amber  = neutral (note)                               -->
+      <!--    Blue   = action (recommendation)                     -->
+      <!-- ═══════════════════════════════════════════════════════ -->
+      <div class="insights-grid">
+        {% for ins in insights %}
+          <div class="card insight-card animate-in delay-{{ (loop.index % 4) + 1 }} {{ ins.type }}">
+
+            <!-- Card header: icon + title + badge -->
+            <div class="insight-header">
+              <span class="insight-icon">{{ ins.icon|safe }}</span>
+              <span class="insight-title">{{ ins.title }}</span>
+              <span class="insight-badge {{ ins.type }}">
+                {% if ins.type == 'positive' %}Strength
+                {% elif ins.type == 'negative' %}Risk
+                {% elif ins.type == 'action' %}Action
+                {% else %}Note
+                {% endif %}
+              </span>
+            </div>
+
+            <!-- Card body: explanation text -->
+            <p class="insight-text">{{ ins.text }}</p>
+
+          </div>
+        {% endfor %}
+      </div>
+
+      <!-- ═══════════════════════════════════════════════════════ -->
+      <!--  PREDICTION HISTORY TABLE                               -->
+      <!--  Shows the user's last 10 predictions in a table        -->
+      <!--  Only shown if there is history data                    -->
+      <!-- ═══════════════════════════════════════════════════════ -->
+      {% if history %}
+        <h2 class="section-heading animate-in" style="margin-top:44px;">Prediction History</h2>
+        <p class="section-sub animate-in delay-1">Your recent predictions.</p>
+
+        <div class="card animate-in delay-2" style="overflow-x:auto;">
+          <table class="history-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Score</th>
+                <th>Result</th>
+                <th>Funding</th>
+                <th>Rounds</th>
+                <th>Industry</th>
+                <th>State</th>
+                <th>Date &amp; Time</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for h in history %}
+                <tr>
+                  <td>{{ loop.index }}</td>
+
+                  <!-- Score with colour: green for success, red for failure -->
+                  <td>
+                    <strong style="color:{{ '#10b981' if h.label=='Success' else '#ef4444' }}">
+                      {{ h.score }}%
+                    </strong>
+                  </td>
+
+                  <!-- Result badge -->
+                  <td>
+                    <span class="table-badge {{ 'success' if h.label=='Success' else 'failure' }}">
+                      {{ h.label }}
+                    </span>
+                  </td>
+
+                  <!-- Funding formatted with commas -->
+                  <td>${{ '{:,.0f}'.format(h.data.get('funding_total_usd','0')|float) }}</td>
+
+                  <td>{{ h.data.get('funding_rounds', '-') }}</td>
+
+                  <!-- Industry: use display name from industry_map -->
+                  <td>{{ industry_map.get(h.data.get('category_code', ''), h.data.get('category_code', '-')) }}</td>
+
+                  <!-- State: use full name from state_map -->
+                  <td>{{ state_map.get(h.data.get('state_code', ''), h.data.get('state_code', '-')) }}</td>
+
+                  <td>{{ h.date }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% endif %}
+
     {% else %}
-    <div class="card animate-in delay-2" style="text-align:center; padding:60px;"><div style="font-size:48px; margin-bottom:16px;">&#128161;</div><h2 style="margin:0 0 8px;">No Insights Yet</h2><p style="color:var(--slate-500); margin:0 0 20px;">Run a prediction first.</p><a href="{{ url_for('home') }}" class="btn-primary" style="display:inline-block;">Go to Predict &rarr;</a></div>
+      <!-- ═══════════════════════════════════════════════════════ -->
+      <!--  NO PREDICTION YET — prompt user to make one            -->
+      <!-- ═══════════════════════════════════════════════════════ -->
+      <div class="card animate-in delay-2" style="text-align:center; padding:60px;">
+        <div style="font-size:48px; margin-bottom:16px;">&#128161;</div>
+        <h2 style="margin:0 0 8px;">No Insights Yet</h2>
+        <p style="color:var(--slate-500); margin:0 0 20px;">Run a prediction first.</p>
+        <a href="{{ url_for('home') }}" class="btn-primary" style="display:inline-block;">Go to Predict &rarr;</a>
+      </div>
     {% endif %}
+
+    <!-- Footer -->
     <footer class="footer">VentureVerse &bull; University of Westminster</footer>
+
   </main>
-  {% if prediction is not none %}{% include 'chatwidget.html' %}{% endif %}
-</body></html>
+
+  <!-- Chatbot widget (only shown after prediction) -->
+  {% if prediction is not none %}
+    {% include 'chatwidget.html' %}
+  {% endif %}
+
+</body>
+</html>

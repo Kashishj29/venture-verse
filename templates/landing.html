@@ -1,3 +1,19 @@
+<!--
+  landing.html — VentureVerse Public Landing Page
+  =================================================
+  This is the first page users see when they visit the site
+  WITHOUT being logged in. Its purpose is to:
+
+    1. Explain what VentureVerse does
+    2. Show key stats (923 startups, 78% accuracy, etc.)
+    3. Highlight features (ML predictions, insights, AI chatbot)
+    4. Explain the 4-step workflow
+    5. Encourage visitors to sign up
+
+  This page does NOT require login. It's a marketing/info page.
+
+  Jinja variables: None (this page uses no dynamic data)
+-->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -9,124 +25,207 @@
 </head>
 <body>
 
-  <!-- Topbar -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!--  TOP NAVIGATION BAR (landing page version)              -->
+  <!--  Has "Features" and "How It Works" anchor links         -->
+  <!-- ═══════════════════════════════════════════════════════ -->
   <header class="topbar">
     <div class="container topbar-inner">
+
+      <!-- Logo -->
       <a href="{{ url_for('home') }}" class="brand" style="text-decoration: none; color: inherit;">
-        <div class="logo-mark"><div class="bar bar-1"></div><div class="bar bar-2"></div><div class="bar bar-3"></div></div>
+        <div class="logo-mark">
+          <div class="bar bar-1"></div>
+          <div class="bar bar-2"></div>
+          <div class="bar bar-3"></div>
+        </div>
         <span class="brand-name">VentureVerse</span>
       </a>
+
+      <!-- Navigation links -->
       <div class="nav-links">
         <a class="nav-pill" href="#features">Features</a>
         <a class="nav-pill" href="#how">How It Works</a>
         <a class="btn-nav" href="{{ url_for('login') }}">Get Started &rarr;</a>
       </div>
+
     </div>
   </header>
 
   <main>
-    <!-- ══════════ HERO ══════════ -->
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!--  HERO SECTION — main headline and call-to-action        -->
+    <!--  This is the first thing visitors see                    -->
+    <!-- ═══════════════════════════════════════════════════════ -->
     <section class="landing-hero container">
-      <h1 class="animate-in">Predict startup success<br><span class="highlight">before you launch</span></h1>
+
+      <!-- Main headline with animated fade-in -->
+      <h1 class="animate-in">
+        Predict startup success<br>
+        <span class="highlight">before you launch</span>
+      </h1>
+
+      <!-- Subtitle explaining what VentureVerse does -->
       <p class="subtitle animate-in delay-1">
         VentureVerse uses machine learning to analyse pre-launch indicators —
         funding, investors, milestones, and market signals — and gives you a
         data-backed success probability in seconds.
       </p>
+
+      <!-- Call-to-action buttons -->
       <div class="landing-cta animate-in delay-2">
         <a href="{{ url_for('signup') }}" class="btn-primary">Start Predicting &rarr;</a>
         <a href="#how" class="btn-secondary">See How It Works</a>
       </div>
+
     </section>
 
-    <!-- Stats -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!--  STATS BAR — key numbers to build credibility           -->
+    <!-- ═══════════════════════════════════════════════════════ -->
     <div class="stats-bar container animate-in delay-3">
-      <div class="stat-item"><div class="stat-num">923</div><div class="stat-label">Real Startups Analysed</div></div>
-      <div class="stat-item"><div class="stat-num">78%</div><div class="stat-label">Prediction Accuracy</div></div>
-      <div class="stat-item"><div class="stat-num">21</div><div class="stat-label">Pre-Launch Features</div></div>
-      <div class="stat-item"><div class="stat-num">3</div><div class="stat-label">ML Models Compared</div></div>
+      <div class="stat-item">
+        <div class="stat-num">923</div>
+        <div class="stat-label">Real Startups Analysed</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num">78%</div>
+        <div class="stat-label">Prediction Accuracy</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num">21</div>
+        <div class="stat-label">Pre-Launch Features</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num">3</div>
+        <div class="stat-label">ML Models Compared</div>
+      </div>
     </div>
 
-    <!-- Preview dashboard -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!--  PREVIEW DASHBOARD — shows what the app looks like      -->
+    <!--  This is a static mockup to give visitors a preview     -->
+    <!-- ═══════════════════════════════════════════════════════ -->
     <div class="container">
       <div class="landing-preview animate-in delay-4">
+
+        <!-- Top row: three stat boxes -->
         <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; text-align:center;">
+          <!-- Success probability -->
           <div style="padding:20px; background:var(--slate-100); border-radius:12px;">
             <div style="font-size:32px; font-weight:900; color:var(--green);">85.4%</div>
             <div style="font-size:13px; color:var(--slate-500); margin-top:4px;">Success Probability</div>
           </div>
+          <!-- Factors analysed -->
           <div style="padding:20px; background:var(--slate-100); border-radius:12px;">
             <div style="font-size:32px; font-weight:900; color:var(--blue-600);">6</div>
             <div style="font-size:13px; color:var(--slate-500); margin-top:4px;">Factors Analysed</div>
           </div>
+          <!-- Recommendations -->
           <div style="padding:20px; background:var(--slate-100); border-radius:12px;">
             <div style="font-size:32px; font-weight:900; color:var(--amber);">3</div>
             <div style="font-size:13px; color:var(--slate-500); margin-top:4px;">Recommendations</div>
           </div>
         </div>
+
+        <!-- Bottom row: sample progress bars showing factor scores -->
         <div style="margin-top:20px; display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+          <!-- Total Funding bar (90% - strong) -->
           <div style="height:12px; background:linear-gradient(90deg, var(--green), #34d399); border-radius:99px; width:90%;"></div>
           <div style="text-align:right; font-size:13px; color:var(--slate-500);">Total Funding — <strong style="color:var(--green);">90%</strong></div>
+
+          <!-- Network Strength bar (55% - moderate) -->
           <div style="height:12px; background:linear-gradient(90deg, var(--amber), #fbbf24); border-radius:99px; width:55%;"></div>
           <div style="text-align:right; font-size:13px; color:var(--slate-500);">Network Strength — <strong style="color:var(--amber);">55%</strong></div>
+
+          <!-- Early Traction bar (20% - weak) -->
           <div style="height:12px; background:linear-gradient(90deg, var(--red), #f87171); border-radius:99px; width:20%;"></div>
           <div style="text-align:right; font-size:13px; color:var(--slate-500);">Early Traction — <strong style="color:var(--red);">20%</strong></div>
         </div>
+
       </div>
     </div>
 
-    <!-- ══════════ FEATURES ══════════ -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!--  FEATURES SECTION — three key features                  -->
+    <!--  Anchor #features allows the "Features" nav link to     -->
+    <!--  scroll here smoothly                                   -->
+    <!-- ═══════════════════════════════════════════════════════ -->
     <section class="features-section container" id="features">
       <h2 class="animate-in">Everything you need to<br>evaluate startup potential</h2>
       <p class="section-sub animate-in delay-1">From prediction to insights to AI-powered advice — all in one platform.</p>
 
       <div class="features-grid">
+
+        <!-- Feature 1: ML Predictions -->
         <div class="feature-card animate-in delay-2">
           <div class="feature-icon blue">&#128202;</div>
           <h3>ML-Powered Predictions</h3>
           <p>Three models (Logistic Regression, Random Forest, XGBoost) compete to give you the most accurate success probability.</p>
         </div>
+
+        <!-- Feature 2: Actionable Insights -->
         <div class="feature-card animate-in delay-3">
           <div class="feature-icon green">&#128161;</div>
           <h3>Actionable Insights</h3>
           <p>Get specific recommendations on what to improve — funding, network, traction — with colour-coded strength analysis.</p>
         </div>
+
+        <!-- Feature 3: AI Chatbot -->
         <div class="feature-card animate-in delay-4">
           <div class="feature-icon amber">&#129302;</div>
           <h3>AI Startup Advisor</h3>
           <p>VentureBot (powered by Google Gemini) gives tailored advice based on your prediction results in real-time.</p>
         </div>
+
       </div>
     </section>
 
-    <!-- ══════════ HOW IT WORKS ══════════ -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!--  HOW IT WORKS — 4-step process                          -->
+    <!--  Anchor #how allows the "How It Works" nav link to      -->
+    <!--  scroll here smoothly                                   -->
+    <!-- ═══════════════════════════════════════════════════════ -->
     <section class="container" id="how" style="padding: 40px 0 60px;">
       <h2 style="font-size:32px; font-weight:900; text-align:center; margin:0 0 40px;" class="animate-in">How It Works</h2>
+
       <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:20px; text-align:center;">
+
+        <!-- Step 1 -->
         <div class="card animate-in delay-1" style="text-align:center;">
           <div style="font-size:36px; margin-bottom:10px;">1️⃣</div>
           <h3 style="font-size:15px; font-weight:800; margin:0 0 6px;">Sign Up</h3>
           <p style="font-size:13px; color:var(--slate-500); margin:0;">Create a free account in seconds</p>
         </div>
+
+        <!-- Step 2 -->
         <div class="card animate-in delay-2" style="text-align:center;">
           <div style="font-size:36px; margin-bottom:10px;">2️⃣</div>
           <h3 style="font-size:15px; font-weight:800; margin:0 0 6px;">Enter Details</h3>
-          <p style="font-size:13px; color:var(--slate-500); margin:0;">Input funding, investors, milestones & more</p>
+          <p style="font-size:13px; color:var(--slate-500); margin:0;">Input funding, investors, milestones &amp; more</p>
         </div>
+
+        <!-- Step 3 -->
         <div class="card animate-in delay-3" style="text-align:center;">
           <div style="font-size:36px; margin-bottom:10px;">3️⃣</div>
           <h3 style="font-size:15px; font-weight:800; margin:0 0 6px;">Get Prediction</h3>
           <p style="font-size:13px; color:var(--slate-500); margin:0;">See success probability with factor breakdown</p>
         </div>
+
+        <!-- Step 4 -->
         <div class="card animate-in delay-4" style="text-align:center;">
           <div style="font-size:36px; margin-bottom:10px;">4️⃣</div>
           <h3 style="font-size:15px; font-weight:800; margin:0 0 6px;">Explore Insights</h3>
-          <p style="font-size:13px; color:var(--slate-500); margin:0;">Charts, recommendations & AI advice</p>
+          <p style="font-size:13px; color:var(--slate-500); margin:0;">Charts, recommendations &amp; AI advice</p>
         </div>
+
       </div>
     </section>
 
-    <!-- CTA -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!--  FINAL CALL-TO-ACTION — encourage sign up               -->
+    <!-- ═══════════════════════════════════════════════════════ -->
     <section class="container" style="text-align:center; padding:40px 0 60px;">
       <div class="card animate-in" style="padding:48px; text-align:center;">
         <h2 style="font-size:28px; font-weight:900; margin:0 0 12px;">Ready to predict your startup's success?</h2>
@@ -135,7 +234,13 @@
       </div>
     </section>
 
-    <footer class="footer container">VentureVerse &bull; BSc Computer Science Final Project &bull; University of Westminster &bull; 2025-2026</footer>
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!--  FOOTER                                                 -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <footer class="footer container">
+      VentureVerse &bull; BSc Computer Science Final Project &bull; University of Westminster &bull; 2025-2026
+    </footer>
+
   </main>
 
 </body>

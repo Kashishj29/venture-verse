@@ -1,3 +1,28 @@
+<!--
+  index.html — VentureVerse Prediction Page (Main Dashboard)
+  ============================================================
+  This is the MAIN page of the app (shown when logged in).
+
+  Left side:  Form to enter startup details
+  Right side: Prediction output (gauge, risk bars, links)
+
+  The page has two states:
+    1. BEFORE prediction: form is empty, right side says "Enter details..."
+    2. AFTER prediction:  form retains values, right side shows results
+
+  Jinja variables:
+    - prediction    : success percentage (e.g. 75.40) or None
+    - pred_label    : "Success" or "Failure" or None
+    - error         : error message string or None
+    - categories    : list of industry codes (e.g. ["software", "biotech"])
+    - states        : list of state codes (e.g. ["CA", "NY"])
+    - state_map     : dict mapping state codes to full names
+    - industry_map  : dict mapping industry codes to display names
+    - form_data     : dict of previously submitted form values
+    - risk_factors  : list of 6 factor dicts (factor, score, status)
+    - user_name     : logged-in user's name
+    - active_page   : "predict" (highlights nav link)
+-->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -8,79 +33,313 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
+
+  <!-- Include the shared navigation bar -->
   {% include 'nav.html' %}
+
   <main class="container">
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!--  PAGE HEADER                                            -->
+    <!-- ═══════════════════════════════════════════════════════ -->
     <div class="page-header">
       <h1 class="animate-in">Startup Success Prediction</h1>
       <p class="animate-in delay-1">Enter early-stage indicators to estimate success probability using machine learning.</p>
     </div>
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!--  MAIN 2-COLUMN GRID                                     -->
+    <!--  Left column: Input form                                -->
+    <!--  Right column: Prediction results                       -->
+    <!-- ═══════════════════════════════════════════════════════ -->
     <div class="main-grid">
+
+      <!-- ─────────────────────────────────────────────────── -->
+      <!--  LEFT COLUMN: Startup Details Form                    -->
+      <!-- ─────────────────────────────────────────────────── -->
       <div class="card animate-in delay-2">
         <div class="card-title">Enter Startup Details</div>
+
         <form action="/predict" method="POST" class="form">
+
+          <!-- ── Section 1: Funding Information ────────────── -->
           <div class="form-section">Funding Information</div>
+
+          <!-- Row: Total funding + number of rounds -->
           <div class="row">
-            <div class="field"><label>Total Funding (USD)</label><input type="number" step="1" name="funding_total_usd" placeholder="e.g. 5000000" value="{{ form_data.get('funding_total_usd','') }}" required><div class="hint">Total amount raised in US dollars</div></div>
-            <div class="field"><label>Funding Rounds</label><input type="number" name="funding_rounds" min="0" placeholder="e.g. 3" value="{{ form_data.get('funding_rounds','') }}" required></div>
+            <div class="field">
+              <label>Total Funding (USD)</label>
+              <input type="number" step="1" name="funding_total_usd"
+                     placeholder="e.g. 5000000"
+                     value="{{ form_data.get('funding_total_usd','') }}" required>
+              <div class="hint">Total amount raised in US dollars</div>
+            </div>
+            <div class="field">
+              <label>Funding Rounds</label>
+              <input type="number" name="funding_rounds" min="0"
+                     placeholder="e.g. 3"
+                     value="{{ form_data.get('funding_rounds','') }}" required>
+            </div>
           </div>
+
+          <!-- Row: Funding timing + participants per round -->
           <div class="row triple">
-            <div class="field"><label>Time to First Funding (yrs)</label><input type="number" step="0.1" name="age_first_funding_year" placeholder="e.g. 0.5" value="{{ form_data.get('age_first_funding_year','') }}" required><div class="hint">Years after founding until first round</div></div>
-            <div class="field"><label>Most Recent Funding (yrs)</label><input type="number" step="0.1" name="age_last_funding_year" placeholder="e.g. 3.0" value="{{ form_data.get('age_last_funding_year','') }}" required><div class="hint">Years from founding to most recent round</div></div>
-            <div class="field"><label>Avg Participants / Round</label><input type="number" step="0.1" name="avg_participants" placeholder="e.g. 2.5" value="{{ form_data.get('avg_participants','') }}" required></div>
+            <div class="field">
+              <label>Time to First Funding (yrs)</label>
+              <input type="number" step="0.1" name="age_first_funding_year"
+                     placeholder="e.g. 0.5"
+                     value="{{ form_data.get('age_first_funding_year','') }}" required>
+              <div class="hint">Years after founding until first round</div>
+            </div>
+            <div class="field">
+              <label>Most Recent Funding (yrs)</label>
+              <input type="number" step="0.1" name="age_last_funding_year"
+                     placeholder="e.g. 3.0"
+                     value="{{ form_data.get('age_last_funding_year','') }}" required>
+              <div class="hint">Years from founding to most recent round</div>
+            </div>
+            <div class="field">
+              <label>Avg Participants / Round</label>
+              <input type="number" step="0.1" name="avg_participants"
+                     placeholder="e.g. 2.5"
+                     value="{{ form_data.get('avg_participants','') }}" required>
+            </div>
           </div>
+
+          <!-- ── Section 2: Company Profile ────────────────── -->
           <div class="form-section">Company Profile</div>
+
+          <!-- Row: Connections + milestones -->
           <div class="row">
-            <div class="field"><label>Key Connections</label><input type="number" name="relationships" min="0" placeholder="e.g. 8" value="{{ form_data.get('relationships','') }}" required><div class="hint">Advisors, board members, co-founders</div></div>
-            <div class="field"><label>Milestones</label><input type="number" name="milestones" min="0" placeholder="e.g. 2" value="{{ form_data.get('milestones','') }}" required></div>
+            <div class="field">
+              <label>Key Connections</label>
+              <input type="number" name="relationships" min="0"
+                     placeholder="e.g. 8"
+                     value="{{ form_data.get('relationships','') }}" required>
+              <div class="hint">Advisors, board members, co-founders</div>
+            </div>
+            <div class="field">
+              <label>Milestones</label>
+              <input type="number" name="milestones" min="0"
+                     placeholder="e.g. 2"
+                     value="{{ form_data.get('milestones','') }}" required>
+            </div>
           </div>
+
+          <!-- Row: Milestone timing -->
           <div class="row">
-            <div class="field"><label>Time to First Milestone (yrs)</label><input type="number" step="0.1" name="age_first_milestone_year" placeholder="0 if none" value="{{ form_data.get('age_first_milestone_year','') }}"></div>
-            <div class="field"><label>Most Recent Milestone (yrs)</label><input type="number" step="0.1" name="age_last_milestone_year" placeholder="0 if none" value="{{ form_data.get('age_last_milestone_year','') }}"></div>
+            <div class="field">
+              <label>Time to First Milestone (yrs)</label>
+              <input type="number" step="0.1" name="age_first_milestone_year"
+                     placeholder="0 if none"
+                     value="{{ form_data.get('age_first_milestone_year','') }}">
+            </div>
+            <div class="field">
+              <label>Most Recent Milestone (yrs)</label>
+              <input type="number" step="0.1" name="age_last_milestone_year"
+                     placeholder="0 if none"
+                     value="{{ form_data.get('age_last_milestone_year','') }}">
+            </div>
           </div>
+
+          <!-- ── Section 3: Investor Backing ───────────────── -->
+          <!--  Checkboxes for different types of investors       -->
           <div class="form-section">Investor Backing</div>
+
           <div class="toggle-row">
-            <label class="toggle-item"><input type="checkbox" name="has_VC" value="1" {% if form_data.get('has_VC')=='1' %}checked{% endif %}>Venture Capital</label>
-            <label class="toggle-item"><input type="checkbox" name="has_angel" value="1" {% if form_data.get('has_angel')=='1' %}checked{% endif %}>Angel Investor</label>
-            <label class="toggle-item"><input type="checkbox" name="has_roundA" value="1" {% if form_data.get('has_roundA')=='1' %}checked{% endif %}>Series A</label>
-            <label class="toggle-item"><input type="checkbox" name="has_roundB" value="1" {% if form_data.get('has_roundB')=='1' %}checked{% endif %}>Series B</label>
-            <label class="toggle-item"><input type="checkbox" name="has_roundC" value="1" {% if form_data.get('has_roundC')=='1' %}checked{% endif %}>Series C</label>
-            <label class="toggle-item"><input type="checkbox" name="has_roundD" value="1" {% if form_data.get('has_roundD')=='1' %}checked{% endif %}>Series D</label>
-            <label class="toggle-item"><input type="checkbox" name="is_top500" value="1" {% if form_data.get('is_top500')=='1' %}checked{% endif %}>Top-500 VC</label>
+            <label class="toggle-item">
+              <input type="checkbox" name="has_VC" value="1"
+                     {% if form_data.get('has_VC')=='1' %}checked{% endif %}>
+              Venture Capital
+            </label>
+            <label class="toggle-item">
+              <input type="checkbox" name="has_angel" value="1"
+                     {% if form_data.get('has_angel')=='1' %}checked{% endif %}>
+              Angel Investor
+            </label>
+            <label class="toggle-item">
+              <input type="checkbox" name="has_roundA" value="1"
+                     {% if form_data.get('has_roundA')=='1' %}checked{% endif %}>
+              Series A
+            </label>
+            <label class="toggle-item">
+              <input type="checkbox" name="has_roundB" value="1"
+                     {% if form_data.get('has_roundB')=='1' %}checked{% endif %}>
+              Series B
+            </label>
+            <label class="toggle-item">
+              <input type="checkbox" name="has_roundC" value="1"
+                     {% if form_data.get('has_roundC')=='1' %}checked{% endif %}>
+              Series C
+            </label>
+            <label class="toggle-item">
+              <input type="checkbox" name="has_roundD" value="1"
+                     {% if form_data.get('has_roundD')=='1' %}checked{% endif %}>
+              Series D
+            </label>
+            <label class="toggle-item">
+              <input type="checkbox" name="is_top500" value="1"
+                     {% if form_data.get('is_top500')=='1' %}checked{% endif %}>
+              Top-500 VC
+            </label>
           </div>
+
+          <!-- ── Section 4: Location & Industry ────────────── -->
           <div class="form-section">Location &amp; Industry</div>
+
           <div class="row">
-            <div class="field"><label>State</label><select name="state_code" required><option value="">Select state</option>{% for s in states %}<option value="{{ s }}" {% if form_data.get('state_code')==s %}selected{% endif %}>{{ state_map[s] }}</option>{% endfor %}</select></div>
-            <div class="field"><label>Industry</label><select name="category_code" required><option value="">Select industry</option>{% for c in categories %}<option value="{{ c }}" {% if form_data.get('category_code')==c %}selected{% endif %}>{{ industry_map[c] }}</option>{% endfor %}</select></div>
+            <!-- State dropdown (populated from STATES list) -->
+            <div class="field">
+              <label>State</label>
+              <select name="state_code" required>
+                <option value="">Select state</option>
+                {% for s in states %}
+                  <option value="{{ s }}"
+                          {% if form_data.get('state_code')==s %}selected{% endif %}>
+                    {{ state_map[s] }}
+                  </option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <!-- Industry dropdown (populated from CATEGORIES list) -->
+            <div class="field">
+              <label>Industry</label>
+              <select name="category_code" required>
+                <option value="">Select industry</option>
+                {% for c in categories %}
+                  <option value="{{ c }}"
+                          {% if form_data.get('category_code')==c %}selected{% endif %}>
+                    {{ industry_map[c] }}
+                  </option>
+                {% endfor %}
+              </select>
+            </div>
           </div>
-          <div class="actions"><button class="btn-submit" type="submit">Predict Success &rarr;</button><a class="btn-ghost" href="{{ url_for('reset') }}">Reset</a></div>
+
+          <!-- ── Submit and Reset buttons ──────────────────── -->
+          <div class="actions">
+            <button class="btn-submit" type="submit">Predict Success &rarr;</button>
+            <a class="btn-ghost" href="{{ url_for('reset') }}">Reset</a>
+          </div>
+
         </form>
       </div>
+
+      <!-- ─────────────────────────────────────────────────── -->
+      <!--  RIGHT COLUMN: Prediction Output                      -->
+      <!-- ─────────────────────────────────────────────────── -->
       <div class="card animate-in delay-3">
         <div class="card-title">Prediction Output</div>
+
         {% if prediction is not none %}
+          <!-- ── Results shown AFTER a prediction ──────────── -->
+
+          <!-- Circular gauge showing the success percentage -->
           <div class="gauge-wrapper">
-            <div class="gauge-ring"><svg width="180" height="180" viewBox="0 0 180 180"><circle class="gauge-track" cx="90" cy="90" r="78"/><circle class="gauge-fill" cx="90" cy="90" r="78" stroke="{{ '#10b981' if pred_label=='Success' else '#ef4444' }}" stroke-dasharray="490" stroke-dashoffset="{{ 490 - (490 * prediction / 100) }}"/></svg><div class="gauge-center"><div class="gauge-percent" {% if pred_label=='Success' %}style="color:#10b981;"{% else %}style="color:#ef4444;"{% endif %}>{{ prediction }}%</div><div class="gauge-label">Success Probability</div></div></div>
-            <div class="pred-status {{ 'success' if pred_label=='Success' else 'failure' }}">&#9679; Predicted: {{ pred_label }}</div>
+            <div class="gauge-ring">
+              <svg width="180" height="180" viewBox="0 0 180 180">
+                <!-- Background circle (grey track) -->
+                <circle class="gauge-track" cx="90" cy="90" r="78"/>
+                <!-- Coloured fill circle (green=success, red=failure) -->
+                <!-- stroke-dashoffset controls how much of the circle is filled -->
+                <circle class="gauge-fill" cx="90" cy="90" r="78"
+                        stroke="{{ '#10b981' if pred_label=='Success' else '#ef4444' }}"
+                        stroke-dasharray="490"
+                        stroke-dashoffset="{{ 490 - (490 * prediction / 100) }}"/>
+              </svg>
+              <!-- Percentage number in the center -->
+              <div class="gauge-center">
+                <div class="gauge-percent"
+                     {% if pred_label=='Success' %}style="color:#10b981;"
+                     {% else %}style="color:#ef4444;"{% endif %}>
+                  {{ prediction }}%
+                </div>
+                <div class="gauge-label">Success Probability</div>
+              </div>
+            </div>
+
+            <!-- Status badge: "● Predicted: Success" or "● Predicted: Failure" -->
+            <div class="pred-status {{ 'success' if pred_label=='Success' else 'failure' }}">
+              &#9679; Predicted: {{ pred_label }}
+            </div>
           </div>
+
+          <!-- ── Factor Strength Bars ──────────────────────── -->
+          <!-- Shows 6 coloured progress bars for each risk factor -->
           {% if risk_factors %}
-          <div style="margin-top:20px;"><div class="chart-title">Factor Strength</div>
-            {% for rf in risk_factors %}<div class="risk-bar-group"><div class="risk-bar-label"><span>{{ rf.factor }}</span><span {% if rf.status=='strong' %}style="color:#10b981;"{% elif rf.status=='moderate' %}style="color:#f59e0b;"{% else %}style="color:#ef4444;"{% endif %}>{{ rf.score }}%</span></div><div class="risk-bar-track"><div class="risk-bar-fill {{ rf.status }}" {{ ('style="width:' ~ rf.score|string ~ '%;"')|safe }}></div></div></div>{% endfor %}
+          <div style="margin-top:20px;">
+            <div class="chart-title">Factor Strength</div>
+            {% for rf in risk_factors %}
+              <div class="risk-bar-group">
+                <div class="risk-bar-label">
+                  <span>{{ rf.factor }}</span>
+                  <span {% if rf.status=='strong' %}style="color:#10b981;"
+                        {% elif rf.status=='moderate' %}style="color:#f59e0b;"
+                        {% else %}style="color:#ef4444;"{% endif %}>
+                    {{ rf.score }}%
+                  </span>
+                </div>
+                <div class="risk-bar-track">
+                  <div class="risk-bar-fill {{ rf.status }}"
+                       {{ ('style="width:' ~ rf.score|string ~ '%;\"')|safe }}></div>
+                </div>
+              </div>
+            {% endfor %}
           </div>
           {% endif %}
+
+          <!-- ── Navigation buttons to other pages ─────────── -->
           <div style="display:flex; gap:10px; margin-top:18px;">
-            <a href="{{ url_for('charts') }}" class="btn-submit" style="text-decoration:none; text-align:center; font-size:14px;">View Charts</a>
-            <a href="{{ url_for('insights') }}" class="btn-outline" style="width:100%;">View Insights</a>
+            <a href="{{ url_for('charts') }}" class="btn-submit"
+               style="text-decoration:none; text-align:center; font-size:14px;">
+              View Charts
+            </a>
+            <a href="{{ url_for('insights') }}" class="btn-outline" style="width:100%;">
+              View Insights
+            </a>
           </div>
-          <div class="note">Decision-support estimate based on Crunchbase indicators. Not financial advice.</div>
+
+          <!-- Disclaimer -->
+          <div class="note">
+            Decision-support estimate based on Crunchbase indicators. Not financial advice.
+          </div>
+
         {% else %}
-          <div class="empty">Enter startup details and click <b>Predict Success</b> to see results.</div>
+          <!-- ── Placeholder shown BEFORE any prediction ───── -->
+          <div class="empty">
+            Enter startup details and click <b>Predict Success</b> to see results.
+          </div>
         {% endif %}
-        {% if error %}<div class="error"><b>Error:</b> {{ error }}</div>{% endif %}
-        <div class="mini"><div class="mini-title">Demo tip</div><div class="mini-text">Try $8M, 3 rounds, VC + Series A, California, Software &rarr; then compare with $200K, 1 round, no VC.</div></div>
+
+        <!-- ── Error message (if prediction failed) ────────── -->
+        {% if error %}
+          <div class="error"><b>Error:</b> {{ error }}</div>
+        {% endif %}
+
+        <!-- ── Demo tip for new users ──────────────────────── -->
+        <div class="mini">
+          <div class="mini-title">Demo tip</div>
+          <div class="mini-text">
+            Try $8M, 3 rounds, VC + Series A, California, Software
+            &rarr; then compare with $200K, 1 round, no VC.
+          </div>
+        </div>
+
       </div>
     </div>
-    <footer class="footer">VentureVerse &bull; Flask + scikit-learn + Chart.js &bull; University of Westminster</footer>
+
+    <!-- ── Footer ──────────────────────────────────────────── -->
+    <footer class="footer">
+      VentureVerse &bull; Flask + scikit-learn + Chart.js &bull; University of Westminster
+    </footer>
+
   </main>
-  {% if prediction is not none %}{% include 'chatwidget.html' %}{% endif %}
+
+  <!-- Include the floating chatbot widget (only shown after a prediction) -->
+  {% if prediction is not none %}
+    {% include 'chatwidget.html' %}
+  {% endif %}
+
 </body>
 </html>
