@@ -131,7 +131,7 @@
 
                   <!-- Score with colour: green for success, red for failure -->
                   <td>
-                    <strong style="color:{{ '#10b981' if h.label=='Success' else '#ef4444' }}">
+                    <strong class="{{ 'text-strong' if h.label=='Success' else 'text-weak' }}">
                       {{ h.score }}%
                     </strong>
                   </td>
