@@ -96,12 +96,12 @@
           <div class="risk-bar-group interactive-bar" style="cursor:pointer; padding:8px 10px; border-radius:10px; transition:all 0.2s;">
             <div class="risk-bar-label" style="font-size:14px;">
               <span style="font-weight:700; color:var(--slate-700);">{{ rf.factor }}</span>
-              <span style="font-weight:900; font-size:15px; color:{{ '#10b981' if rf.status=='strong' else ('#f59e0b' if rf.status=='moderate' else '#ef4444') }}">
+              <span class="text-{{ rf.status }}" style="font-weight:900; font-size:15px;">
                 {{ rf.score }}%
               </span>
             </div>
             <div class="risk-bar-track" style="height:12px;">
-              <div class="risk-bar-fill {{ rf.status }}" style="width:{{ rf.score }}%"></div>
+              <div class="risk-bar-fill bg-{{ rf.status }}" data-score="{{ rf.score }}"></div>
             </div>
             <!-- Tooltip that shows on hover -->
             <div class="bar-tooltip" style="display:none; margin-top:6px; padding:8px 12px; border-radius:8px; background:var(--slate-900); color:white; font-size:12px; font-weight:500; line-height:1.4;">
@@ -143,191 +143,189 @@
   <!--  using data passed from the Flask backend via Jinja     -->
   <!-- ═══════════════════════════════════════════════════════ -->
   {% if prediction is not none %}
+  <!-- Data for charts passed from Flask via JSON -->
+  <div id="chart-data" 
+       data-prediction="{{ prediction|tojson }}" 
+       data-risk-factors="{{ risk_factors|tojson if risk_factors else '[]' }}"
+       data-model-comparison="{{ model_comparison|tojson if model_comparison else 'null' }}"
+       style="display:none;"></div>
+
+  {% if prediction is not none %}
   <script>
-    // ── Global Chart.js defaults ──────────────────────────
-    // Set consistent styling across all charts
-    Chart.defaults.color = '#64748b';           // Text colour (slate)
-    Chart.defaults.borderColor = '#e2e8f0';     // Grid line colour
-    Chart.defaults.font.family = "'Inter', sans-serif";
-    Chart.defaults.font.size = 13;
+    (function() {
+      // ── Parse data from the hidden element ────────────────
+      const dataEl = document.getElementById('chart-data');
+      const prediction = JSON.parse(dataEl.dataset.prediction);
+      const riskFactors = JSON.parse(dataEl.dataset.riskFactors);
+      const modelComparison = JSON.parse(dataEl.dataset.modelComparison);
 
-    // ── Chart 1: Polar Area (Prediction Drivers) ──────────
-    // Each factor gets a coloured segment. Size = score value.
-    // Colours: green = strong, amber = moderate, red = weak.
-    {% if risk_factors %}
-    new Chart(document.getElementById('probChart'), {
-      type: 'polarArea',
-      data: {
-        labels: [
-          {% for rf in risk_factors %}
-            '{{ rf.factor }}'{% if not loop.last %},{% endif %}
-          {% endfor %}
-        ],
-        datasets: [{
-          data: [
-            {% for rf in risk_factors %}
-              {{ rf.score }}{% if not loop.last %},{% endif %}
-            {% endfor %}
-          ],
-          backgroundColor: [
-            {% for rf in risk_factors %}
-              '{{ "rgba(16, 185, 129, 0.75)" if rf.status=="strong" else ("rgba(245, 158, 11, 0.75)" if rf.status=="moderate" else "rgba(239, 68, 68, 0.75)") }}'{% if not loop.last %},{% endif %}
-            {% endfor %}
-          ],
-          borderWidth: 1.5,
-          borderColor: '#ffffff',
-          hoverOffset: 8
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-          r: {
-            ticks: { display: false },
-            grid: { color: 'rgba(226, 232, 240, 0.8)' }
-          }
-        },
-        plugins: {
-          legend: {
-            position: 'right',
-            labels: { padding: 16, usePointStyle: true, font: { size: 12 } }
+      // ── Set factor bar widths (Fixes IDE CSS errors) ──────
+      document.querySelectorAll('.risk-bar-fill').forEach(bar => {
+        const score = bar.getAttribute('data-score');
+        if (score) bar.style.width = score + '%';
+      });
+
+      // ── Global Chart.js defaults ──────────────────────────
+      Chart.defaults.color = '#64748b';
+      Chart.defaults.borderColor = '#e2e8f0';
+      Chart.defaults.font.family = "'Inter', sans-serif";
+      Chart.defaults.font.size = 13;
+
+      // ── Chart 1: Polar Area (Prediction Drivers) ──────────
+      if (riskFactors && riskFactors.length > 0) {
+        new Chart(document.getElementById('probChart'), {
+          type: 'polarArea',
+          data: {
+            labels: riskFactors.map(rf => rf.factor),
+            datasets: [{
+              data: riskFactors.map(rf => rf.score),
+              backgroundColor: riskFactors.map(rf => {
+                if (rf.status === 'strong') return "rgba(16, 185, 129, 0.75)";
+                if (rf.status === 'moderate') return "rgba(245, 158, 11, 0.75)";
+                return "rgba(239, 68, 68, 0.75)";
+              }),
+              borderWidth: 1.5,
+              borderColor: '#ffffff',
+              hoverOffset: 8
+            }]
           },
-          tooltip: {
-            backgroundColor: '#0f172a',
-            titleFont: { size: 14, weight: 'bold' },
-            bodyFont: { size: 13 },
-            padding: 14,
-            cornerRadius: 10,
-            callbacks: {
-              label: ctx => ' ' + ctx.label + ': ' + ctx.parsed.r + '%'
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              r: {
+                ticks: { display: false },
+                grid: { color: 'rgba(226, 232, 240, 0.8)' }
+              }
+            },
+            plugins: {
+              legend: {
+                position: 'right',
+                labels: { padding: 16, usePointStyle: true, font: { size: 12 } }
+              },
+              tooltip: {
+                backgroundColor: '#0f172a',
+                titleFont: { size: 14, weight: 'bold' },
+                bodyFont: { size: 13 },
+                padding: 14,
+                cornerRadius: 10,
+                callbacks: {
+                  label: ctx => ' ' + ctx.label + ': ' + ctx.parsed.r + '%'
+                }
+              }
             }
           }
-        }
+        });
+      } else {
+        new Chart(document.getElementById('probChart'), {
+          type: 'doughnut',
+          data: {
+            labels: ['Data Unavailable'],
+            datasets: [{ data: [100], backgroundColor: ['#e2e8f0'] }]
+          }
+        });
       }
-    });
-    {% else %}
-    // Fallback: show a grey doughnut if no risk factors available
-    new Chart(document.getElementById('probChart'), {
-      type: 'doughnut',
-      data: {
-        labels: ['Data Unavailable'],
-        datasets: [{ data: [100], backgroundColor: ['#e2e8f0'] }]
-      }
-    });
-    {% endif %}
 
-    // ── Chart 2: Radar (Factor Profile vs Ideal) ──────────
-    // Blue line = your startup's scores
-    // Green dashed line = ideal benchmark scores
-    {% if risk_factors %}
-    new Chart(document.getElementById('radarChart'), {
-      type: 'radar',
-      data: {
-        labels: [
-          {% for rf in risk_factors %}
-            '{{ rf.factor }}'{% if not loop.last %},{% endif %}
-          {% endfor %}
-        ],
-        datasets: [
-          {
-            // Your startup's scores
-            label: 'Your Startup',
-            data: [
-              {% for rf in risk_factors %}
-                {{ rf.score }}{% if not loop.last %},{% endif %}
-              {% endfor %}
+      // ── Chart 2: Radar (Factor Profile vs Ideal) ──────────
+      if (riskFactors && riskFactors.length > 0) {
+        new Chart(document.getElementById('radarChart'), {
+          type: 'radar',
+          data: {
+            labels: riskFactors.map(rf => rf.factor),
+            datasets: [
+              {
+                label: 'Your Startup',
+                data: riskFactors.map(rf => rf.score),
+                backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                borderColor: '#2563eb',
+                borderWidth: 2.5,
+                pointBackgroundColor: '#2563eb',
+                pointRadius: 5,
+                pointHoverRadius: 8
+              },
+              {
+                label: 'Ideal',
+                data: [90, 85, 95, 85, 80, 85],
+                backgroundColor: 'rgba(16, 185, 129, 0.06)',
+                borderColor: '#10b981',
+                borderWidth: 1.5,
+                borderDash: [4, 4],
+                pointRadius: 0
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              r: {
+                beginAtZero: true,
+                max: 100,
+                ticks: { stepSize: 25, display: false },
+                grid: { color: '#e2e8f0' },
+                angleLines: { color: '#e2e8f0' },
+                pointLabels: {
+                  font: { size: 11, weight: '600' },
+                  color: '#64748b'
+                }
+              }
+            },
+            plugins: {
+              legend: {
+                position: 'bottom',
+                labels: { padding: 14, usePointStyle: true, font: { size: 12 } }
+              },
+              tooltip: {
+                backgroundColor: '#0f172a',
+                padding: 12,
+                cornerRadius: 10
+              }
+            }
+          }
+        });
+      }
+
+      // ── Chart 3: Doughnut (Success vs Risk) ───────────────
+      new Chart(document.getElementById('doughnutChart'), {
+        type: 'doughnut',
+        data: {
+          labels: ['Success Probability', 'Risk / Failure Probability'],
+          datasets: [{
+            data: [prediction, 100 - prediction],
+            backgroundColor: [
+              'rgba(16, 185, 129, 0.85)',
+              'rgba(239, 68, 68, 0.85)'
             ],
-            backgroundColor: 'rgba(37, 99, 235, 0.1)',
-            borderColor: '#2563eb',
-            borderWidth: 2.5,
-            pointBackgroundColor: '#2563eb',
-            pointRadius: 5,
-            pointHoverRadius: 8
-          },
-          {
-            // Ideal benchmark (static values representing a strong startup)
-            label: 'Ideal',
-            data: [90, 85, 95, 85, 80, 85],
-            backgroundColor: 'rgba(16, 185, 129, 0.06)',
-            borderColor: '#10b981',
-            borderWidth: 1.5,
-            borderDash: [4, 4],
-            pointRadius: 0
-          }
-        ]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-          r: {
-            beginAtZero: true,
-            max: 100,
-            ticks: { stepSize: 25, display: false },
-            grid: { color: '#e2e8f0' },
-            angleLines: { color: '#e2e8f0' },
-            pointLabels: {
-              font: { size: 11, weight: '600' },
-              color: '#64748b'
-            }
-          }
+            borderWidth: 2,
+            borderColor: '#ffffff',
+            hoverOffset: 12
+          }]
         },
-        plugins: {
-          legend: {
-            position: 'bottom',
-            labels: { padding: 14, usePointStyle: true, font: { size: 12 } }
-          },
-          tooltip: {
-            backgroundColor: '#0f172a',
-            padding: 12,
-            cornerRadius: 10
-          }
-        }
-      }
-    });
-
-    // ── Chart 3: Doughnut (Success vs Risk) ───────────────
-    // Shows the predicted success % vs the remaining risk %
-    new Chart(document.getElementById('doughnutChart'), {
-      type: 'doughnut',
-      data: {
-        labels: ['Success Probability', 'Risk / Failure Probability'],
-        datasets: [{
-          data: [{{ prediction }}, {{ 100 - prediction }}],
-          backgroundColor: [
-            'rgba(16, 185, 129, 0.85)', // Green for success
-            'rgba(239, 68, 68, 0.85)'   // Red for failure/risk
-          ],
-          borderWidth: 2,
-          borderColor: '#ffffff',
-          hoverOffset: 12
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        cutout: '70%',
-        plugins: {
-          legend: {
-            position: 'bottom',
-            labels: { padding: 20, usePointStyle: true, font: { size: 13, weight: 'bold' } }
-          },
-          tooltip: {
-            backgroundColor: '#0f172a',
-            padding: 14,
-            cornerRadius: 10,
-            callbacks: {
-              label: function(context) {
-                return ' ' + context.label + ': ' + context.raw + '%';
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          cutout: '70%',
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: { padding: 20, usePointStyle: true, font: { size: 13, weight: 'bold' } }
+            },
+            tooltip: {
+              backgroundColor: '#0f172a',
+              padding: 14,
+              cornerRadius: 10,
+              callbacks: {
+                label: function(context) {
+                  return ' ' + context.label + ': ' + context.raw + '%';
+                }
               }
             }
           }
         }
-      }
-    });
-    {% endif %}
+      });
+    })();
   </script>
+  {% endif %}
 
   <!-- Interactive hover tooltips for the factor bars -->
   <script>

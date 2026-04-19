@@ -74,6 +74,15 @@
   --shadow-lg: 0 12px 48px rgba(15,23,42,0.12);   /* Larger shadow */
 }
 
+/* Status Utility Classes */
+.text-strong   { color: var(--green); }
+.text-moderate { color: var(--amber); }
+.text-weak     { color: var(--red); }
+
+.bg-strong     { background-color: var(--green); }
+.bg-moderate   { background-color: var(--amber); }
+.bg-weak       { background-color: var(--red); }
+
 
 /* ═══════════════════════════════════════════════════════════════
    2. BASE / RESET STYLES
