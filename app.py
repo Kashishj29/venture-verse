@@ -9,7 +9,11 @@ What this app does:
   3. Feeds the data into an ML model           (XGBoost pipeline)
   4. Shows a success probability + insights    (prediction output)
   5. Generates charts and a downloadable PDF   (visualisation)
-  6. Provides an AI chatbot via Google Gemini  (chatbot)
+  1. Lets users sign up, log in, and log out  (authentication)
+  2. Collects startup details via a form       (prediction input)
+  3. Feeds the data into an ML model           (XGBoost pipeline)
+  4. Shows a success probability + insights    (prediction output)
+  5. Generates charts and a downloadable PDF   (visualisation)
 
 Tech stack:
   - Flask     → lightweight Python web framework
@@ -17,7 +21,6 @@ Tech stack:
   - joblib    → loads the pre-trained ML model from disk
   - pandas    → builds the input dataframe for the model
   - reportlab → generates PDF reports
-  - Gemini    → Google's AI for the chatbot feature
 
 Author : Kashish Jadhav (w2035589)
 Module : 6COSC023W — BSc Computer Science Final Project
@@ -76,9 +79,6 @@ MAIL_PASSWORD = "ymad pvyb wrfy ejix"
 NEWS_CACHE = None
 LAST_FETCH_TIME = None
 CACHE_DURATION = timedelta(minutes=30)
-
-# ── GEMINI API KEY ───────────────────────────────────────────
-GEMINI_API_KEY = "AIzaSyBadRdKX8Zi_bhfapi9ZwvcL4ZJtArnnOQ"
 
 # ── ADMIN CREDENTIALS (Hardcoded) ─────────────────────────────
 ADMIN_EMAIL = "admin@ventureverse.com"
@@ -1318,144 +1318,9 @@ def news():
 
 
 # ═══════════════════════════════════════════════════════════════
-#  ROUTES: AI Chatbot (Google Gemini)
 # ═══════════════════════════════════════════════════════════════
-
-# Using the GEMINI_API_KEY defined at the top of the file.
-
-
-@app.route("/chatbot")
-def chatbot():
-    """
-    Shows the chatbot page. Initialises an empty chat history
-    in the session if this is the user's first visit.
-    """
-    if "user_id" not in session:
-        return redirect(url_for("login"))
-
-    if not session.get("chat_history"):
-        session["chat_history"] = []
-
-    return render_template(
-        "chatbot.html",
-        chat_history=session.get("chat_history", []),
-        user_name=session.get("user_name"),
-        active_page="chatbot",
-        api_configured=bool(GEMINI_API_KEY),
-    )
-
-
-@app.route("/chat", methods=["POST"])
-def chat():
-    """
-    Receives a chat message from the user (as JSON), sends it
-    to Google's Gemini AI along with context about the user's
-    latest prediction, and returns the AI's response.
-
-    The conversation history is stored in the session so the
-    chatbot remembers previous messages in the same session.
-    """
-    if "user_id" not in session:
-        return {"error": "Not logged in"}, 401
-
-    user_message = request.json.get("message", "").strip()
-    if not user_message:
-        return {"error": "Empty message"}, 400
-
-    if not GEMINI_API_KEY:
-        return {"error": "Gemini API key not configured. Set GEMINI_API_KEY environment variable."}, 500
-
-    # ── Build context about the user's prediction ────────────
-    prediction = session.get("last_prediction")
-    pred_label = session.get("last_pred_label")
-    form_data = session.get("last_form_data", {})
-    risk_factors = session.get("last_risk_factors", [])
-
-    # System prompt tells Gemini how to behave
-    context_parts = [
-        "You are VentureBot, an AI startup advisor integrated into VentureVerse — a startup success prediction platform.",
-        "You provide actionable, concise startup advice. Keep responses under 200 words unless the user asks for detail.",
-        "Be encouraging but honest. Use specific data points when available.",
-    ]
-
-    # If the user has a prediction, include it as context
-    if prediction is not None:
-        funding = form_data.get("funding_total_usd", "N/A")
-        industry = INDUSTRY_MAP.get(form_data.get("category_code", ""), "N/A")
-        ecosystem = ECOSYSTEMMAP.get(form_data.get("ecosystem", ""), "N/A")
-        rounds = form_data.get("funding_rounds", "N/A")
-
-        context_parts.append(f"\nThe user just ran a prediction with these results:")
-        context_parts.append(f"- Success Probability: {prediction}% ({pred_label})")
-        context_parts.append(f"- Total Funding: ${float(funding):,.0f}" if funding != "N/A" else "")
-        context_parts.append(f"- Funding Rounds: {rounds}")
-        context_parts.append(f"- Industry: {industry}")
-        context_parts.append(f"- Ecosystem: {ecosystem}")
-
-        if risk_factors:
-            weak = [rf["factor"] for rf in risk_factors if rf["status"] == "weak"]
-            strong = [rf["factor"] for rf in risk_factors if rf["status"] == "strong"]
-            if weak:
-                context_parts.append(f"- Weak factors: {', '.join(weak)}")
-            if strong:
-                context_parts.append(f"- Strong factors: {', '.join(strong)}")
-
-    system_prompt = "\n".join(context_parts)
-
-    # ── Build conversation history for Gemini ────────────────
-    chat_history = session.get("chat_history", [])
-
-    try:
-        from google import genai
-
-        client = genai.Client(api_key=GEMINI_API_KEY)
-
-        # Include the last 10 messages for context
-        contents = []
-        for msg in chat_history[-10:]:
-            contents.append({
-                "role": "user" if msg["role"] == "user" else "model",
-                "parts": [{"text": msg["text"]}],
-            })
-        contents.append({"role": "user", "parts": [{"text": user_message}]})
-
-        # Call the Gemini API
-        response = client.models.generate_content(
-            model="gemini-2.0-flash",
-            contents=contents,
-            config={
-                "system_instruction": system_prompt,
-                "temperature": 0.7,       # Slightly creative
-                "max_output_tokens": 500,  # Keep replies concise
-            },
-        )
-
-        bot_reply = response.text
-
-        # Save messages to session history
-        chat_history.append({"role": "user", "text": user_message})
-        chat_history.append({"role": "bot", "text": bot_reply})
-        session["chat_history"] = chat_history[-20:]  # Keep last 20 messages
-
-        return {"reply": bot_reply}
-
-    except ImportError:
-        return {"error": "google-genai package not installed. Run: pip install google-genai"}, 500
-    except Exception as error:
-        error_msg = str(error)
-        # Check if this is a quota/rate limit error (status 429)
-        if "429" in error_msg or "RESOURCE_EXHAUSTED" in error_msg or "quota" in error_msg.lower():
-            bot_reply = "VentureBot is currently resting (API quota reached). Please try again in a few minutes or check your connection."
-            return {"reply": bot_reply}
-        
-        return {"error": error_msg}, 500
-
-
-@app.route("/chat/clear", methods=["POST"])
-def clear_chat():
-    """Clears the chatbot conversation history."""
-    session["chat_history"] = []
-    return {"status": "cleared"}
+#  END OF FILE
+# ═══════════════════════════════════════════════════════════════
 
 
 # ═══════════════════════════════════════════════════════════════
