@@ -1,0 +1,142 @@
+<!--
+  about.html — VentureVerse About Page
+  ======================================
+  Shows information about the project:
+    1. What VentureVerse does
+    2. Technology stack used
+    3. Developer profile (Kashish Jadhav)
+    4. Supervisor and module details
+
+  Jinja variables:
+    - user_name   : logged-in user's name (or None)
+    - active_page : "about" (highlights nav link)
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>VentureVerse | About</title>
+  <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}?v=3">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+  <!-- Shared navigation bar -->
+  {% include 'nav.html' %}
+
+  <main class="container">
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!--  PAGE HEADER                                            -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <div class="page-header">
+      <h1 class="animate-in">About VentureVerse</h1>
+      <p class="animate-in delay-1">ML-powered startup success prediction using pre-launch public indicators.</p>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!--  ABOUT GRID — 2 columns + 1 full-width row              -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <div class="about-grid">
+
+      <!-- ── Card 1: What It Does ──────────────────────────── -->
+      <div class="card animate-in delay-1">
+        <div class="card-title">What It Does</div>
+        <div class="about-content">
+          <p>
+            Analyses early-stage indicators — funding, investors, network,
+            milestones, industry, location — to estimate success probability
+            before market entry.
+          </p>
+          <p>Free and open-access, built on real Crunchbase data.</p>
+          <p class="note" style="margin-top:16px;">⚠️ <strong>Dataset Notice:</strong> VentureVerse's model was trained on US-based Crunchbase startup data (pre-2014). Predictions are indicative for non-US users. Ecosystem categories are used to approximate global startup environments.</p>
+        </div>
+      </div>
+
+      <!-- ── Card 2: Technology Stack ──────────────────────── -->
+      <div class="card animate-in delay-2">
+        <div class="card-title">Tech Stack</div>
+        <div class="about-content">
+          <div class="tech-grid">
+
+            <div class="tech-item">
+              <div class="tech-label">Backend</div>
+              <div class="tech-value">Python Flask</div>
+            </div>
+
+            <div class="tech-item">
+              <div class="tech-label">ML Models</div>
+              <div class="tech-value">LR, RF, XGBoost</div>
+            </div>
+
+            <div class="tech-item">
+              <div class="tech-label">Frontend</div>
+              <div class="tech-value">HTML, CSS, JS</div>
+            </div>
+
+            <div class="tech-item">
+              <div class="tech-label">Charts</div>
+              <div class="tech-value">Chart.js</div>
+            </div>
+
+            <div class="tech-item">
+              <div class="tech-label">Database</div>
+              <div class="tech-value">SQLite</div>
+            </div>
+
+            <div class="tech-item">
+              <div class="tech-label">AI Chat</div>
+              <div class="tech-value">Google Gemini</div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Card 3: Developer Profile (full width) ────────── -->
+      <div class="card animate-in delay-3" style="grid-column:1/-1;">
+        <div class="card-title">Developer</div>
+        <div class="about-content">
+
+          <!-- Developer photo + name -->
+          <div class="dev-profile">
+            <img src="{{ url_for('static', filename='Kashish_jadhav.jpeg') }}"
+                 alt="Kashish Jadhav"
+                 class="dev-avatar"
+                 style="object-fit: cover; background: none; border: 2px solid var(--primary-100);">
+            <div class="dev-info">
+              <h3>Kashish Jadhav</h3>
+              <p class="dev-role">BSc Computer Science</p>
+              <p class="dev-uni">University of Westminster &bull; w2035589</p>
+            </div>
+          </div>
+
+          <!-- Project details -->
+          <div class="dev-details">
+            <div class="dev-detail-item">
+              <span class="dev-detail-label">Supervisor</span>
+              <span class="dev-detail-value">Ebad Majeed</span>
+            </div>
+            <div class="dev-detail-item">
+              <span class="dev-detail-label">Module</span>
+              <span class="dev-detail-value">6COSC023W — CS Final Project</span>
+            </div>
+            <div class="dev-detail-item">
+              <span class="dev-detail-label">Year</span>
+              <span class="dev-detail-value">2025 – 2026</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">VentureVerse &bull; University of Westminster</footer>
+
+  </main>
+
+</body>
+</html>

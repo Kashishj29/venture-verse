@@ -1,0 +1,80 @@
+<!--
+  nav.html — VentureVerse Navigation Bar (Shared Component)
+  ==========================================================
+  This file is INCLUDED inside every logged-in page using:
+    {# include 'nav.html' #}
+
+  It shows:
+    - The VentureVerse logo (links to home)
+    - "Hi, [FirstName]" greeting
+    - Navigation links: Predict, Charts, Insights, About
+    - Logout button (only visible when logged in)
+
+  The "active" class highlights which page the user is currently on.
+
+  Jinja variables:
+    - user_name   : the logged-in user's full name (e.g. "Kashish Jadhav")
+    - active_page : which page is active ("predict", "charts", "insights", "about")
+-->
+
+<!-- Sticky top navigation bar -->
+<header class="topbar">
+  <div class="container topbar-inner">
+
+    <!-- ── Logo and Brand Name ─────────────────────────── -->
+    <!-- Clicking the logo takes the user back to the home page -->
+    <a href="{{ url_for('home') }}" class="brand" style="text-decoration: none; color: inherit;">
+      <div class="logo-mark">
+        <div class="bar bar-1"></div>
+        <div class="bar bar-2"></div>
+        <div class="bar bar-3"></div>
+      </div>
+      <span class="brand-name">VentureVerse</span>
+    </a>
+
+    <!-- Hamburger Menu (Mobile Only) -->
+    <button class="menu-toggle" id="menu-toggle" aria-label="Toggle Menu">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+
+    <!-- ── Navigation Links ────────────────────────────── -->
+    <div class="nav-links" id="nav-links">
+
+      <a class="nav-pill {{ 'active' if active_page=='predict' }}" href="{{ url_for('home') }}">Predict</a>
+      <a class="nav-pill {{ 'active' if active_page=='charts' }}" href="{{ url_for('charts') }}">Charts</a>
+      <a class="nav-pill {{ 'active' if active_page=='insights' }}" href="{{ url_for('insights') }}">Insights</a>
+      <a class="nav-pill {{ 'active' if active_page=='news' }}" href="{{ url_for('news') }}">News</a>
+      <a class="nav-pill {{ 'active' if active_page=='about' }}" href="{{ url_for('about') }}">About</a>
+
+      {% if user_name %}
+        <div class="nav-group-mobile">
+          <span class="user-badge">Hi, {{ user_name.split(' ')[0] }}</span>
+          <a class="btn-nav" href="{{ url_for('logout') }}">Logout</a>
+        </div>
+      {% endif %}
+
+    </div>
+
+  </div>
+</header>
+
+<script>
+  // Mobile Menu Toggle
+  const menuToggle = document.getElementById('menu-toggle');
+  const navLinks = document.getElementById('nav-links');
+
+  menuToggle.addEventListener('click', () => {
+    navLinks.classList.toggle('active');
+    menuToggle.classList.toggle('active');
+  });
+
+  // Close menu when a link is clicked
+  navLinks.querySelectorAll('a').forEach(link => {
+    link.addEventListener('click', () => {
+      navLinks.classList.remove('active');
+      menuToggle.classList.remove('active');
+    });
+  });
+</script>

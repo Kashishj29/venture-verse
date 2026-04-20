@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>VentureVerse | Startup News & Insights</title>
+  <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}?v=3">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <style>
+    .news-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+      gap: 24px;
+      margin-top: 30px;
+    }
+    
+    .news-card {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+
+    .news-source-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 12px;
+    }
+
+    .source-techcrunch { background: rgba(16, 185, 129, 0.1); color: var(--green); }
+    .source-forbes { background: rgba(37, 99, 235, 0.1); color: var(--blue-600); }
+
+    .news-date {
+      font-size: 12px;
+      color: var(--slate-400);
+      margin-bottom: 8px;
+    }
+
+    .news-card h3 {
+      font-size: 19px;
+      font-weight: 800;
+      margin: 0 0 12px;
+      line-height: 1.4;
+      color: var(--slate-900);
+    }
+
+    .news-summary {
+      font-size: 14px;
+      color: var(--slate-500);
+      line-height: 1.6;
+      margin-bottom: 20px;
+      flex-grow: 1;
+    }
+
+    @media (max-width: 480px) {
+      .news-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navigation -->
+  {% include 'nav.html' %}
+
+  <main class="container">
+    
+    <div class="page-header animate-in">
+      <h1>Startup News & Insights</h1>
+      <p>Stay ahead of the ecosystem with live updates from top tech sources.</p>
+    </div>
+
+    <!-- News Grid -->
+    <div class="news-grid animate-in delay-1">
+      
+      {% for article in articles %}
+      <div class="card news-card">
+        
+        <div class="news-source-badge {{ 'source-techcrunch' if article.source == 'TechCrunch' else 'source-forbes' }}">
+          {{ article.source }}
+        </div>
+
+        <div class="news-date">{{ article.published }}</div>
+        
+        <h3>{{ article.title }}</h3>
+        
+        <p class="news-summary">{{ article.summary }}</p>
+        
+        <a href="{{ article.link }}" target="_blank" class="btn-outline">
+          Read Full Article &rarr;
+        </a>
+
+      </div>
+      {% endfor %}
+
+    </div>
+
+    <footer class="footer">
+      VentureVerse &bull; Live Ecosystem News Feed
+    </footer>
+
+  </main>
+
+</body>
+</html>

@@ -1,0 +1,99 @@
+{
+  "winner": "Random Forest",
+  "holdout_metrics": {
+    "accuracy": 0.7675675675675676,
+    "balanced_accuracy": 0.7185897435897436,
+    "precision": 0.7851851851851852,
+    "recall": 0.8833333333333333,
+    "f1": 0.8313725490196079,
+    "roc_auc": 0.8303846153846154,
+    "pr_auc": 0.8833367923944375,
+    "classification_report": "              precision    recall  f1-score   support\n\n           0       0.72      0.55      0.63        65\n           1       0.79      0.88      0.83       120\n\n    accuracy                           0.77       185\n   macro avg       0.75      0.72      0.73       185\nweighted avg       0.76      0.77      0.76       185\n",
+    "confusion_matrix": [
+      [
+        36,
+        29
+      ],
+      [
+        14,
+        106
+      ]
+    ]
+  },
+  "all_model_results": [
+    {
+      "name": "Logistic Regression",
+      "cv_roc_auc_mean": 0.7866985110635805,
+      "cv_roc_auc_std": 0.04196462806489781,
+      "cv_f1_mean": 0.8197991764110496,
+      "cv_f1_std": 0.025160101031908744,
+      "cv_accuracy_mean": 0.7547894833609119,
+      "cv_accuracy_std": 0.033179974848747615,
+      "cv_balanced_accuracy_mean": 0.7096005207139766,
+      "cv_balanced_accuracy_std": 0.03543134906426942,
+      "cv_precision_mean": 0.7804625772480669,
+      "cv_precision_std": 0.021899538920284203,
+      "cv_recall_mean": 0.8639035087719298,
+      "cv_recall_std": 0.03681588457072769
+    },
+    {
+      "name": "Random Forest",
+      "cv_roc_auc_mean": 0.8092316206426806,
+      "cv_roc_auc_std": 0.034951766375121485,
+      "cv_f1_mean": 0.8552448335697782,
+      "cv_f1_std": 0.01809968425321762,
+      "cv_accuracy_mean": 0.796708953851811,
+      "cv_accuracy_std": 0.02600150525562362,
+      "cv_balanced_accuracy_mean": 0.7419402324752374,
+      "cv_balanced_accuracy_std": 0.03161607337793275,
+      "cv_precision_mean": 0.7928844280030216,
+      "cv_precision_std": 0.02101769884246084,
+      "cv_recall_mean": 0.9287280701754387,
+      "cv_recall_std": 0.024176177006012305
+    },
+    {
+      "name": "XGBoost",
+      "cv_roc_auc_mean": 0.7911018941130038,
+      "cv_roc_auc_std": 0.024633805091591784,
+      "cv_f1_mean": 0.8356204366679714,
+      "cv_f1_std": 0.02807686466770397,
+      "cv_accuracy_mean": 0.776429490715205,
+      "cv_accuracy_std": 0.036464370813037134,
+      "cv_balanced_accuracy_mean": 0.7332712200493978,
+      "cv_balanced_accuracy_std": 0.037078492730047936,
+      "cv_precision_mean": 0.7952349298003275,
+      "cv_precision_std": 0.021511618474579115,
+      "cv_recall_mean": 0.8805482456140352,
+      "cv_recall_std": 0.03748124595169858
+    }
+  ],
+  "features": {
+    "numeric": [
+      "age_first_funding_year",
+      "age_last_funding_year",
+      "age_first_milestone_year",
+      "age_last_milestone_year",
+      "relationships",
+      "funding_rounds",
+      "funding_total_usd",
+      "milestones",
+      "avg_participants",
+      "funding_duration",
+      "avg_funding_per_round",
+      "log_funding"
+    ],
+    "binary": [
+      "has_VC",
+      "has_angel",
+      "has_roundA",
+      "has_roundB",
+      "has_roundC",
+      "has_roundD",
+      "is_top500"
+    ],
+    "categorical": [
+      "category_code",
+      "state_code"
+    ]
+  }
+}

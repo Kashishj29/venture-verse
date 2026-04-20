@@ -1,0 +1,356 @@
+<!--
+  charts.html — VentureVerse Visual Analytics Page
+  ==================================================
+  Displays interactive charts using Chart.js library:
+    1. Prediction Drivers   — Polar Area chart (coloured segments)
+    2. Factor Radar Profile — Radar chart (your startup vs ideal)
+    3. Prediction Gauge     — SVG circle gauge
+    4. Factor Strength Bars — Horizontal progress bars
+
+  If no prediction has been made yet, shows a "No Prediction Yet"
+  message with a link back to the Predict page.
+
+  Jinja variables:
+    - prediction       : success percentage or None
+    - pred_label       : "Success" or "At Risk" or None
+    - risk_factors     : list of 6 factor dicts
+    - model_comparison : dict with model names and metrics
+    - user_name        : logged-in user's name
+    - active_page      : "charts"
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>VentureVerse | Charts</title>
+  <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}?v=3">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+  <!-- Chart.js library — renders interactive canvas charts -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+  <!-- Shared navigation bar -->
+  {% include 'nav.html' %}
+
+  <main class="container">
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!--  PAGE HEADER                                            -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <div class="page-header">
+      <h1 class="animate-in">Visual Analytics</h1>
+      <p class="animate-in delay-1">Hover over charts for detailed breakdowns and data points.</p>
+    </div>
+
+    {% if prediction is not none %}
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!--  CHARTS GRID (shown after a prediction)                 -->
+    <!--  2x2 grid of chart cards                                -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <div class="dashboard-grid">
+
+      <!-- ── Chart 1: Prediction Drivers (Polar Area) ──────── -->
+      <!-- Shows each factor as a coloured segment sized by score -->
+      <div class="card animate-in delay-1">
+        <div class="chart-title" style="font-size:18px; color:var(--slate-900);">Prediction Drivers</div>
+        <div class="chart-desc" style="font-size:14px; color:var(--blue-600); font-weight:600;">Relative impact and strength of core prediction factors</div>
+        <div class="chart-container">
+          <canvas id="probChart"></canvas>
+        </div>
+      </div>
+
+      <!-- ── Chart 2: Radar Profile ────────────────────────── -->
+      <!-- Spider/radar chart comparing your startup to an ideal benchmark -->
+      <div class="card animate-in delay-2">
+        <div class="chart-title" style="font-size:18px; color:var(--slate-900);">Factor Radar Profile</div>
+        <div class="chart-desc" style="font-size:14px; color:var(--blue-600); font-weight:600;">Your startup factors vs ideal benchmark</div>
+        <div class="chart-container">
+          <canvas id="radarChart"></canvas>
+        </div>
+      </div>
+
+      <!-- ── Chart 3: Success vs Risk Probability (Doughnut) ─── -->
+      <!-- Interactive doughnut chart comparing success vs risk -->
+      <div class="card animate-in delay-3">
+        <div class="chart-title" style="font-size:18px; color:var(--slate-900);">Probability Breakdown</div>
+        <div class="chart-desc" style="font-size:14px; color:var(--blue-600); font-weight:600;">Success vs Risk Probability</div>
+        <div class="chart-container">
+          <canvas id="doughnutChart"></canvas>
+        </div>
+      </div>
+
+      <!-- ── Chart 4: Factor Strength Bars ─────────────────── -->
+      <!-- Horizontal bars with green/amber/red colouring -->
+      {% if risk_factors %}
+      <div class="card animate-in delay-4">
+        <div class="chart-title" style="font-size:18px; color:var(--slate-900);">Factor Strength Bars</div>
+        <div class="chart-desc" style="font-size:14px; color:var(--blue-600); font-weight:600;">
+          <span style="color:var(--green);">&#9679; Strong</span> &nbsp;
+          <span style="color:var(--amber);">&#9679; Moderate</span> &nbsp;
+          <span style="color:var(--red);">&#9679; Weak</span>
+        </div>
+        {% for rf in risk_factors %}
+          <div class="risk-bar-group interactive-bar" style="cursor:pointer; padding:8px 10px; border-radius:10px; transition:all 0.2s;">
+            <div class="risk-bar-label" style="font-size:14px;">
+              <span style="font-weight:700; color:var(--slate-700);">{{ rf.factor }}</span>
+              <span class="text-{{ rf.status }}" style="font-weight:900; font-size:15px;">
+                {{ rf.score }}%
+              </span>
+            </div>
+            <div class="risk-bar-track" style="height:12px;">
+              <div class="risk-bar-fill bg-{{ rf.status }}" data-score="{{ rf.score }}"></div>
+            </div>
+            <!-- Tooltip that shows on hover -->
+            <div class="bar-tooltip" style="display:none; margin-top:6px; padding:8px 12px; border-radius:8px; background:var(--slate-900); color:white; font-size:12px; font-weight:500; line-height:1.4;">
+              {% if rf.status == 'strong' %}
+                &#10004; <strong>{{ rf.factor }}</strong> is a strength — this factor supports success.
+              {% elif rf.status == 'moderate' %}
+                &#9888; <strong>{{ rf.factor }}</strong> is moderate — there is room for improvement.
+              {% else %}
+                &#10060; <strong>{{ rf.factor }}</strong> is weak — priority area to improve.
+              {% endif %}
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+    </div>
+
+    {% else %}
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!--  NO PREDICTION YET — prompt user to run one first       -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <div class="card animate-in delay-2" style="text-align:center; padding:60px;">
+      <div style="font-size:48px; margin-bottom:16px;">&#128202;</div>
+      <h2 style="margin:0 0 8px;">No Prediction Yet</h2>
+      <p style="color:var(--slate-500); margin:0 0 20px;">Run a prediction first to see charts.</p>
+      <a href="{{ url_for('home') }}" class="btn-primary" style="display:inline-block;">Go to Predict &rarr;</a>
+    </div>
+    {% endif %}
+
+    <!-- Footer -->
+    <footer class="footer">VentureVerse &bull; University of Westminster</footer>
+
+  </main>
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!--  CHART.JS SCRIPTS                                       -->
+  <!--  These JavaScript blocks create the interactive charts  -->
+  <!--  using data passed from the Flask backend via Jinja     -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+  {% if prediction is not none %}
+  <!-- Data for charts passed from Flask via JSON -->
+  <div id="chart-data" 
+       data-prediction='{{ prediction|tojson }}' 
+       data-risk-factors='{{ risk_factors|tojson if risk_factors else "[]" }}'
+       data-model-comparison='{{ model_comparison|tojson if model_comparison else "null" }}'
+       style="display:none;"></div>
+
+  {% if prediction is not none %}
+  <script>
+    (function() {
+      // ── Parse data from the hidden element ────────────────
+      const dataEl = document.getElementById('chart-data');
+      const prediction = JSON.parse(dataEl.dataset.prediction);
+      const riskFactors = JSON.parse(dataEl.dataset.riskFactors);
+      const modelComparison = JSON.parse(dataEl.dataset.modelComparison);
+
+      // ── Set factor bar widths (Fixes IDE CSS errors) ──────
+      document.querySelectorAll('.risk-bar-fill').forEach(bar => {
+        const score = bar.getAttribute('data-score');
+        if (score) bar.style.width = score + '%';
+      });
+
+      // ── Global Chart.js defaults ──────────────────────────
+      Chart.defaults.color = '#64748b';
+      Chart.defaults.borderColor = '#e2e8f0';
+      Chart.defaults.font.family = "'Inter', sans-serif";
+      Chart.defaults.font.size = 13;
+
+      // ── Chart 1: Polar Area (Prediction Drivers) ──────────
+      if (riskFactors && riskFactors.length > 0) {
+        new Chart(document.getElementById('probChart'), {
+          type: 'polarArea',
+          data: {
+            labels: riskFactors.map(rf => rf.factor),
+            datasets: [{
+              data: riskFactors.map(rf => rf.score),
+              backgroundColor: riskFactors.map(rf => {
+                if (rf.status === 'strong') return "rgba(16, 185, 129, 0.75)";
+                if (rf.status === 'moderate') return "rgba(245, 158, 11, 0.75)";
+                return "rgba(239, 68, 68, 0.75)";
+              }),
+              borderWidth: 1.5,
+              borderColor: '#ffffff',
+              hoverOffset: 8
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              r: {
+                ticks: { display: false },
+                grid: { color: 'rgba(226, 232, 240, 0.8)' }
+              }
+            },
+            plugins: {
+              legend: {
+                position: 'right',
+                labels: { padding: 16, usePointStyle: true, font: { size: 12 } }
+              },
+              tooltip: {
+                backgroundColor: '#0f172a',
+                titleFont: { size: 14, weight: 'bold' },
+                bodyFont: { size: 13 },
+                padding: 14,
+                cornerRadius: 10,
+                callbacks: {
+                  label: ctx => ' ' + ctx.label + ': ' + ctx.parsed.r + '%'
+                }
+              }
+            }
+          }
+        });
+      } else {
+        new Chart(document.getElementById('probChart'), {
+          type: 'doughnut',
+          data: {
+            labels: ['Data Unavailable'],
+            datasets: [{ data: [100], backgroundColor: ['#e2e8f0'] }]
+          }
+        });
+      }
+
+      // ── Chart 2: Radar (Factor Profile vs Ideal) ──────────
+      if (riskFactors && riskFactors.length > 0) {
+        new Chart(document.getElementById('radarChart'), {
+          type: 'radar',
+          data: {
+            labels: riskFactors.map(rf => rf.factor),
+            datasets: [
+              {
+                label: 'Your Startup',
+                data: riskFactors.map(rf => rf.score),
+                backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                borderColor: '#2563eb',
+                borderWidth: 2.5,
+                pointBackgroundColor: '#2563eb',
+                pointRadius: 5,
+                pointHoverRadius: 8
+              },
+              {
+                label: 'Ideal',
+                data: [90, 85, 95, 85, 80, 85],
+                backgroundColor: 'rgba(16, 185, 129, 0.06)',
+                borderColor: '#10b981',
+                borderWidth: 1.5,
+                borderDash: [4, 4],
+                pointRadius: 0
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              r: {
+                beginAtZero: true,
+                max: 100,
+                ticks: { stepSize: 25, display: false },
+                grid: { color: '#e2e8f0' },
+                angleLines: { color: '#e2e8f0' },
+                pointLabels: {
+                  font: { size: 11, weight: '600' },
+                  color: '#64748b'
+                }
+              }
+            },
+            plugins: {
+              legend: {
+                position: 'bottom',
+                labels: { padding: 14, usePointStyle: true, font: { size: 12 } }
+              },
+              tooltip: {
+                backgroundColor: '#0f172a',
+                padding: 12,
+                cornerRadius: 10
+              }
+            }
+          }
+        });
+      }
+
+      // ── Chart 3: Doughnut (Success vs Risk) ───────────────
+      new Chart(document.getElementById('doughnutChart'), {
+        type: 'doughnut',
+        data: {
+          labels: ['Success Probability', 'At Risk Probability'],
+          datasets: [{
+            data: [prediction, 100 - prediction],
+            backgroundColor: [
+              'rgba(16, 185, 129, 0.85)',
+              'rgba(239, 68, 68, 0.85)'
+            ],
+            borderWidth: 2,
+            borderColor: '#ffffff',
+            hoverOffset: 12
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          cutout: '70%',
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: { padding: 20, usePointStyle: true, font: { size: 13, weight: 'bold' } }
+            },
+            tooltip: {
+              backgroundColor: '#0f172a',
+              padding: 14,
+              cornerRadius: 10,
+              callbacks: {
+                label: function(context) {
+                  return ' ' + context.label + ': ' + context.raw + '%';
+                }
+              }
+            }
+          }
+        }
+      });
+    })();
+  </script>
+  {% endif %}
+
+  <!-- Interactive hover tooltips for the factor bars -->
+  <script>
+    // When you hover over a factor bar, show its tooltip pop-up
+    // and highlight the row with a light background
+    document.querySelectorAll('.interactive-bar').forEach(function(bar) {
+      var tooltip = bar.querySelector('.bar-tooltip');
+
+      bar.addEventListener('mouseenter', function() {
+        if (tooltip) tooltip.style.display = 'block';
+        bar.style.background = 'var(--slate-100)';
+        bar.style.transform = 'scale(1.01)';
+      });
+
+      bar.addEventListener('mouseleave', function() {
+        if (tooltip) tooltip.style.display = 'none';
+        bar.style.background = 'transparent';
+        bar.style.transform = 'scale(1)';
+      });
+    });
+  </script>
+
+  <!-- Include the floating chatbot widget -->
+  {% include 'chatwidget.html' %}
+  {% endif %}
+
+</body>
+</html>
