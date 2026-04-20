@@ -247,7 +247,7 @@ def login_as_test_user():
     """
     client.post(
         "/login",
-        data=dict(email="mihir@test.com", password="pass1234"),
+        data=dict(email="mihir@test.com", password="Pass1234!"),
         follow_redirects=True,
     )
 
@@ -281,8 +281,8 @@ else:
         response = client.post("/signup", data=dict(
             full_name="Test User",
             email="mihir@test.com",
-            password="pass1234",
-            confirm_password="pass1234",
+            password="Pass1234!",
+            confirm_password="Pass1234!",
         ), follow_redirects=True)
 
         passed = response.status_code == 200
@@ -299,8 +299,8 @@ else:
         response = client.post("/signup", data=dict(
             full_name="Copy Cat",
             email="mihir@test.com",  # Same email as TC01
-            password="pass1234",
-            confirm_password="pass1234",
+            password="Pass1234!",
+            confirm_password="Pass1234!",
         ), follow_redirects=True)
 
         # Check if the error message appears in the response
@@ -318,7 +318,7 @@ else:
         client.get("/logout")  # Make sure we're logged out first
         response = client.post("/login", data=dict(
             email="mihir@test.com",
-            password="pass1234",
+            password="Pass1234!",
         ), follow_redirects=True)
 
         passed = response.status_code == 200 and b"Invalid" not in response.data
@@ -375,7 +375,7 @@ else:
 
         has_score = (b"%" in response.data
                      or b"Success" in response.data
-                     or b"Failure" in response.data)
+                     or b"At Risk" in response.data)
         passed = response.status_code == 200 and has_score
         record("TC06", "Prediction form with valid inputs returns a score",
                passed,
