@@ -45,7 +45,11 @@ import pandas as pd     # Creates dataframes for the ML model
 import sqlite3          # Built-in Python database
 import hashlib          # Hashes passwords (SHA-256)
 import os               # Reads environment variables, file paths
-from datetime import datetime  # Timestamps for PDF and history
+from datetime import datetime, timedelta  # Timestamps for PDF and history
+import re                   # Regex for password validation
+import smtplib              # Sending emails
+from email.mime.text import MIMEText
+import feedparser           # Scraping RSS feeds
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -63,6 +67,22 @@ app.secret_key = os.urandom(24)
 DB_FILE = "ventureverse.db"             # SQLite database file
 MODEL_FILE = "ventureverse_model.joblib"  # Trained ML model
 RESULTS_FILE = "model_results_summary.json"  # Model comparison metrics
+
+# ── MAIL CONFIGURATION (Gmail) ────────────────────────────────
+MAIL_EMAIL = "ventureverseltd@gmail.com"
+MAIL_PASSWORD = "ymad pvyb wrfy ejix"
+
+# ── NEWS CACHE ───────────────────────────────────────────────
+NEWS_CACHE = None
+LAST_FETCH_TIME = None
+CACHE_DURATION = timedelta(minutes=30)
+
+# ── GEMINI API KEY ───────────────────────────────────────────
+GEMINI_API_KEY = "AIzaSyBadRdKX8Zi_bhfapi9ZwvcL4ZJtArnnOQ"
+
+# ── ADMIN CREDENTIALS (Hardcoded) ─────────────────────────────
+ADMIN_EMAIL = "admin@ventureverse.com"
+ADMIN_PASSWORD = "admin123"
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -153,18 +173,12 @@ except Exception:
 # These dictionaries convert them into full, readable names
 # for display on the website.
 
-STATE_MAP = {
-    "CA": "California",
-    "NY": "New York",
-    "MA": "Massachusetts",
-    "TX": "Texas",
-    "WA": "Washington",
-    "CO": "Colorado",
-    "IL": "Illinois",
-    "FL": "Florida",
-    "other": "Other",
+ECOSYSTEMMAP = {
+    'major_hub': '🌍 Major Hub (Silicon Valley / London / NYC / Berlin)',
+    'secondary_hub': '🏙️ Secondary Hub (Austin / Paris / Singapore / Dubai)',
+    'emerging': '🌱 Emerging Market (Other regions worldwide)'
 }
-STATES = list(STATE_MAP.keys())  # ["CA", "NY", "MA", ...]
+ECOSYSTEMS = list(ECOSYSTEMMAP.keys())  # ["major_hub", "secondary_hub", "emerging"]
 
 INDUSTRY_MAP = {
     "biotech": "Biotech",
@@ -231,7 +245,15 @@ def build_input_df(form):
 
     # --- Read category fields ---
     category = form.get("category_code", "other")
-    state = form.get("state_code", "other")
+    ecosystem = form.get("ecosystem", "other")
+
+    # Internal mapping for model compatibility
+    ecosystem_to_state = {
+        'major_hub': 'CA',
+        'secondary_hub': 'NY',
+        'emerging': 'other'
+    }
+    state = ecosystem_to_state.get(ecosystem, 'other')
 
     # --- Engineer derived features (must match train_model.py) ---
     # How long between first and last funding round (in years)
@@ -356,14 +378,14 @@ def compute_risk_breakdown(form):
     else:
         factors.append({"factor": "Early Traction", "score": 10, "status": "weak"})
 
-    # ── Factor 6: Location ───────────────────────────────────
-    state = form.get("state_code", "other")
-    if state == "CA":  # Silicon Valley
-        factors.append({"factor": "Location", "score": 85, "status": "strong"})
-    elif state in ("NY", "MA", "WA"):  # Major tech hubs
-        factors.append({"factor": "Location", "score": 65, "status": "moderate"})
-    else:  # Everywhere else
-        factors.append({"factor": "Location", "score": 35, "status": "moderate"})
+    # ── Factor 6: Ecosystem ───────────────────────────────────
+    ecosystem = form.get("ecosystem", "emerging")
+    if ecosystem == "major_hub":
+        factors.append({"factor": "Ecosystem", "score": 85, "status": "strong"})
+    elif ecosystem == "secondary_hub":
+        factors.append({"factor": "Ecosystem", "score": 65, "status": "moderate"})
+    else:
+        factors.append({"factor": "Ecosystem", "score": 35, "status": "moderate"})
 
     return factors
 
@@ -552,28 +574,27 @@ def generate_insights(form, prediction, pred_label, risk_factors):
             ),
         })
 
-    # ── Card 6: Location advantage ───────────────────────────
-    state = form.get("state_code", "other")
-    state_name = STATE_MAP.get(state, state)
+    # ── Card 6: Ecosystem advantage ───────────────────────────
+    ecosystem = form.get("ecosystem", "emerging")
 
-    if state == "CA":
+    if ecosystem == "major_hub":
         insights.append({
-            "title": "Silicon Valley Advantage",
+            "title": "Major Hub Advantage",
             "icon": "&#128205;",  # 📍
             "type": "positive",
             "text": (
-                f"Based in {state_name} — the world's largest startup "
-                f"ecosystem with unmatched investor density and talent pool."
+                "Based in a top global startup hub with strong "
+                "investor density and talent access."
             ),
         })
-    elif state in ("NY", "MA", "WA"):
+    elif ecosystem == "secondary_hub":
         insights.append({
-            "title": f"{state_name} Ecosystem",
+            "title": "Strong Ecosystem",
             "icon": "&#128205;",
             "type": "neutral",
             "text": (
-                f"Located in {state_name}, a strong secondary startup "
-                f"hub with solid ecosystem support."
+                "Located in a growing secondary hub with solid "
+                "support networks."
             ),
         })
 
@@ -686,6 +707,42 @@ def get_prediction_history(user_id):
 
 
 # ═══════════════════════════════════════════════════════════════
+#  HELPER FUNCTION: Send Welcome Email
+# ═══════════════════════════════════════════════════════════════
+
+def send_welcome_email(to_email, user_name):
+    """
+    Sends a welcome email via Gmail SMTP.
+    Fails silently if configuration is missing or connection fails.
+    """
+    if MAIL_EMAIL == "your@gmail.com":
+        return
+
+    try:
+        msg = MIMEText(
+            f"Hi {user_name.split(' ')[0]},\n\n"
+            f"Welcome to VentureVerse! 🚀\n\n"
+            f"We're excited to have you on board. VentureVerse helps you predict "
+            f"startup success using advanced machine learning models.\n\n"
+            f"You can now log in and start predicting at: https://venture-verse-s9ch.onrender.com\n\n"
+            f"Best regards,\n"
+            f"The VentureVerse Team"
+        )
+        msg['Subject'] = "Welcome to VentureVerse! 🚀"
+        msg['From'] = MAIL_EMAIL
+        msg['To'] = to_email
+
+        with smtplib.SMTP("smtp.gmail.com", 587) as server:
+            server.starttls()
+            server.login(MAIL_EMAIL, MAIL_PASSWORD)
+            server.send_message(msg)
+        print(f"✅ Success: Welcome email sent to {to_email}")
+    except Exception as e:
+        print(f"❌ Mail Error: {str(e)}")
+        pass  # Skip silently for the user, but log for the developer
+
+
+# ═══════════════════════════════════════════════════════════════
 #  ROUTES: Authentication (Login, Signup, Logout)
 # ═══════════════════════════════════════════════════════════════
 
@@ -706,7 +763,16 @@ def login():
         email = request.form.get("email", "").strip()
         password = request.form.get("password", "")
 
-        # Look up the user by email in the database
+        # --- CASE 1: Check Admin Credentials ---
+        if email == ADMIN_EMAIL and password == ADMIN_PASSWORD:
+            session.clear()  # Clear any existing session
+            session["user_id"] = "admin"
+            session["user_name"] = "Administrator"
+            session["user_email"] = email
+            session["is_admin"] = True
+            return redirect(url_for("admin"))
+
+        # --- CASE 2: Check standard user in Database ---
         connection = sqlite3.connect(DB_FILE)
         cursor = connection.cursor()
         cursor.execute(
@@ -722,6 +788,7 @@ def login():
             session["user_id"] = user[0]
             session["user_name"] = user[1]
             session["user_email"] = email
+            session["is_admin"] = False
             return redirect(url_for("home"))
 
         # If we get here, login failed
@@ -756,8 +823,11 @@ def signup():
         if password != confirm:
             return render_template("signup.html", error="Passwords do not match.")
 
-        if len(password) < 6:
-            return render_template("signup.html", error="Password must be 6+ characters.")
+        # Backend Password Validation (Live JS also checks this)
+        # 8+ chars, 1 uppercase, 1 number, 1 special
+        pw_regex = r"^(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*]).{8,}$"
+        if not re.match(pw_regex, password):
+            return render_template("signup.html", error="Password does not meet security requirements.")
 
         # Try to insert the new user into the database
         try:
@@ -775,11 +845,20 @@ def signup():
             session["user_id"] = new_user_id
             session["user_name"] = name
             session["user_email"] = email
+
+            # Send welcome email (async-like / non-blocking skip on fail)
+            send_welcome_email(email, name)
+
             return redirect(url_for("home"))
 
         except sqlite3.IntegrityError:
+            connection.close()
             # This error means the email already exists (UNIQUE constraint)
             return render_template("signup.html", error="Email already registered.")
+        except Exception as e:
+            if 'connection' in locals():
+                connection.close()
+            return render_template("signup.html", error=f"Database error: {str(e)}")
 
     # GET request — just show the signup form
     return render_template("signup.html", error=None)
@@ -819,8 +898,8 @@ def home():
         pred_label=session.get("last_pred_label"),
         error=None,
         categories=CATEGORIES,
-        states=STATES,
-        state_map=STATE_MAP,
+        ecosystems=ECOSYSTEMS,
+        ecosystemmap=ECOSYSTEMMAP,
         industry_map=INDUSTRY_MAP,
         form_data=session.get("last_form_data", {}),
         risk_factors=session.get("last_risk_factors"),
@@ -863,27 +942,38 @@ def predict():
         return redirect(url_for("login"))
 
     try:
-        # Step 2: Read all form fields into a dictionary
-        form_data = {key: request.form.get(key, "") for key in request.form}
+        # Step 2: Read all form fields and clean whitespace.
+        # Default empty numeric fields to "0" to prevent float conversion errors.
+        numeric_fields = [
+            "funding_total_usd", "funding_rounds", "relationships", "milestones",
+            "avg_participants", "age_first_funding_year", "age_last_funding_year",
+            "age_first_milestone_year", "age_last_milestone_year"
+        ]
+        
+        form_data = {}
+        for key in request.form:
+            val = request.form.get(key, "").strip()
+            if key in numeric_fields and not val:
+                val = "0"
+            form_data[key] = val
 
-        # Step 3: Check required fields are not empty
-        required_fields = ["funding_total_usd", "funding_rounds"]
-        for field in required_fields:
-            if not form_data.get(field, "").strip():
-                return render_template(
-                    "index.html",
-                    prediction=None,
-                    pred_label=None,
-                    error="All fields are required. Please complete the form.",
-                    categories=CATEGORIES,
-                    states=STATES,
-                    state_map=STATE_MAP,
-                    industry_map=INDUSTRY_MAP,
-                    form_data=form_data,
-                    risk_factors=None,
-                    user_name=session.get("user_name"),
-                    active_page="predict",
-                )
+        # Step 3: Check required fields (must not be "0" if they are critical)
+        # Note: funding_total_usd and funding_rounds are now at least "0"
+        if form_data.get("funding_total_usd") == "0" or form_data.get("funding_rounds") == "0":
+            return render_template(
+                "index.html",
+                prediction=None,
+                pred_label=None,
+                error="Funding Total and Funding Rounds are required.",
+                categories=CATEGORIES,
+                ecosystems=ECOSYSTEMS,
+                ecosystemmap=ECOSYSTEMMAP,
+                industry_map=INDUSTRY_MAP,
+                form_data=form_data,
+                risk_factors=None,
+                user_name=session.get("user_name"),
+                active_page="predict",
+            )
 
         # Step 4: Build the input DataFrame
         input_df = build_input_df(form_data)
@@ -893,7 +983,7 @@ def predict():
         # We want index [0][1] = the success probability
         probability = model.predict_proba(input_df)[0][1]
         prediction_pct = round(probability * 100, 2)  # e.g. 0.754 → 75.40
-        pred_label = "Success" if probability >= 0.5 else "Failure"
+        pred_label = "Success" if probability >= 0.5 else "At Risk"
 
         # Step 6: Compute the risk factor breakdown
         risk_factors = compute_risk_breakdown(form_data)
@@ -917,6 +1007,8 @@ def predict():
             connection.commit()
             connection.close()
         except Exception:
+            if 'connection' in locals():
+                connection.close()
             pass  # Don't crash if the database save fails
 
         # Step 8: Show the result
@@ -926,8 +1018,8 @@ def predict():
             pred_label=pred_label,
             error=None,
             categories=CATEGORIES,
-            states=STATES,
-            state_map=STATE_MAP,
+            ecosystems=ECOSYSTEMS,
+            ecosystemmap=ECOSYSTEMMAP,
             industry_map=INDUSTRY_MAP,
             form_data=form_data,
             risk_factors=risk_factors,
@@ -944,8 +1036,8 @@ def predict():
             pred_label=None,
             error=str(error),
             categories=CATEGORIES,
-            states=STATES,
-            state_map=STATE_MAP,
+            ecosystems=ECOSYSTEMS,
+            ecosystemmap=ECOSYSTEMMAP,
             industry_map=INDUSTRY_MAP,
             form_data=form_data,
             risk_factors=None,
@@ -1014,7 +1106,7 @@ def insights():
         pred_label=pred_label,
         insights=insight_cards,
         history=get_prediction_history(session["user_id"]),
-        state_map=STATE_MAP,
+        ecosystemmap=ECOSYSTEMMAP,
         industry_map=INDUSTRY_MAP,
         user_name=session.get("user_name"),
         active_page="insights",
@@ -1174,12 +1266,62 @@ def about():
 
 
 # ═══════════════════════════════════════════════════════════════
+#  ROUTES: News Feed (RSS Scraper)
+# ═══════════════════════════════════════════════════════════════
+
+@app.route("/news")
+def news():
+    """
+    Fetches startup news from TechCrunch and Forbes RSS feeds.
+    Caches the results for 30 minutes.
+    """
+    global NEWS_CACHE, LAST_FETCH_TIME
+
+    now = datetime.now()
+    if NEWS_CACHE and LAST_FETCH_TIME and (now - LAST_FETCH_TIME < CACHE_DURATION):
+        articles = NEWS_CACHE
+    else:
+        # Fetch fresh news
+        feeds = [
+            {"name": "TechCrunch", "url": "https://techcrunch.com/category/startups/feed/"},
+            {"name": "Forbes", "url": "https://www.forbes.com/entrepreneurs/feed/"}
+        ]
+
+        articles = []
+        for f in feeds:
+            feed_data = feedparser.parse(f["url"])
+            # Get latest 6 from each
+            for entry in feed_data.entries[:6]:
+                # Format date
+                date_str = "-"
+                if 'published' in entry:
+                    date_str = entry.published[:16]
+
+                articles.append({
+                    "title": entry.title,
+                    "link": entry.link,
+                    "summary": re.sub('<[^<]+?>', '', entry.summary[:200]) + "...",
+                    "published": date_str,
+                    "source": f["name"]
+                })
+
+        # Update cache
+        NEWS_CACHE = articles
+        LAST_FETCH_TIME = now
+
+    return render_template(
+        "news.html",
+        articles=articles,
+        user_name=session.get("user_name"),
+        active_page="news"
+    )
+
+
+# ═══════════════════════════════════════════════════════════════
 #  ROUTES: AI Chatbot (Google Gemini)
 # ═══════════════════════════════════════════════════════════════
 
-# Read the Gemini API key from an environment variable.
-# This keeps the key safe (not hard-coded in the source code).
-GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
+# Using the GEMINI_API_KEY defined at the top of the file.
 
 
 @app.route("/chatbot")
@@ -1240,7 +1382,7 @@ def chat():
     if prediction is not None:
         funding = form_data.get("funding_total_usd", "N/A")
         industry = INDUSTRY_MAP.get(form_data.get("category_code", ""), "N/A")
-        state = STATE_MAP.get(form_data.get("state_code", ""), "N/A")
+        ecosystem = ECOSYSTEMMAP.get(form_data.get("ecosystem", ""), "N/A")
         rounds = form_data.get("funding_rounds", "N/A")
 
         context_parts.append(f"\nThe user just ran a prediction with these results:")
@@ -1248,7 +1390,7 @@ def chat():
         context_parts.append(f"- Total Funding: ${float(funding):,.0f}" if funding != "N/A" else "")
         context_parts.append(f"- Funding Rounds: {rounds}")
         context_parts.append(f"- Industry: {industry}")
-        context_parts.append(f"- Location: {state}")
+        context_parts.append(f"- Ecosystem: {ecosystem}")
 
         if risk_factors:
             weak = [rf["factor"] for rf in risk_factors if rf["status"] == "weak"]
@@ -1300,7 +1442,13 @@ def chat():
     except ImportError:
         return {"error": "google-genai package not installed. Run: pip install google-genai"}, 500
     except Exception as error:
-        return {"error": str(error)}, 500
+        error_msg = str(error)
+        # Check if this is a quota/rate limit error (status 429)
+        if "429" in error_msg or "RESOURCE_EXHAUSTED" in error_msg or "quota" in error_msg.lower():
+            bot_reply = "VentureBot is currently resting (API quota reached). Please try again in a few minutes or check your connection."
+            return {"reply": bot_reply}
+        
+        return {"error": error_msg}, 500
 
 
 @app.route("/chat/clear", methods=["POST"])
@@ -1308,6 +1456,161 @@ def clear_chat():
     """Clears the chatbot conversation history."""
     session["chat_history"] = []
     return {"status": "cleared"}
+
+
+# ═══════════════════════════════════════════════════════════════
+#  ROUTES: Admin Dashboard
+# ═══════════════════════════════════════════════════════════════
+
+@app.route("/admin")
+def admin():
+    """
+    Shows high-level system statistics for administrators.
+    Requires session['is_admin'] to be True.
+    """
+    if not session.get("is_admin"):
+        return redirect(url_for("login"))
+
+    try:
+        connection = sqlite3.connect(DB_FILE)
+        cursor = connection.cursor()
+
+        # Stats 1: Total Users
+        cursor.execute("SELECT COUNT(*) FROM users")
+        total_users = cursor.fetchone()[0]
+
+        # Stats 2: Total Predictions
+        cursor.execute("SELECT COUNT(*) FROM predictions")
+        total_predictions = cursor.fetchone()[0]
+
+        # Stats 3: Success vs At Risk counts
+        cursor.execute("SELECT COUNT(*) FROM predictions WHERE pred_label='Success'")
+        success_count = cursor.fetchone()[0]
+        at_risk_count = total_predictions - success_count
+
+        # Stats 4: Most Active User
+        cursor.execute("""
+            SELECT u.full_name, u.email, COUNT(p.id) as pred_count
+            FROM users u
+            JOIN predictions p ON u.id = p.user_id
+            GROUP BY u.id
+            ORDER BY pred_count DESC
+            LIMIT 1
+        """)
+        active_user_row = cursor.fetchone()
+        most_active = {
+            "name": active_user_row[0],
+            "email": active_user_row[1],
+            "count": active_user_row[2]
+        } if active_user_row else None
+
+        connection.close()
+
+        return render_template(
+            "admin.html",
+            total_users=total_users,
+            total_predictions=total_predictions,
+            success_count=success_count,
+            at_risk_count=at_risk_count,
+            most_active=most_active,
+            user_name=session.get("user_name"),
+            active_tab="dashboard"
+        )
+    except Exception as e:
+        return f"Admin Error: {str(e)}", 500
+
+
+@app.route("/admin/users")
+def admin_users():
+    """Shows a list of all registered users."""
+    if not session.get("is_admin"):
+        return redirect(url_for("login"))
+
+    try:
+        connection = sqlite3.connect(DB_FILE)
+        cursor = connection.cursor()
+        cursor.execute("SELECT id, full_name, email, created_at FROM users ORDER BY created_at DESC")
+        rows = cursor.fetchall()
+        connection.close()
+
+        users_list = []
+        for r in rows:
+            users_list.append({
+                "id": r[0],
+                "name": r[1],
+                "email": r[2],
+                "joined": r[3][:10] if r[3] else "-"
+            })
+
+        return render_template(
+            "admin.html",
+            users=users_list,
+            user_name=session.get("user_name"),
+            active_tab="users"
+        )
+    except Exception as e:
+        return str(e), 500
+
+
+@app.route("/admin/predictions")
+def admin_predictions():
+    """Shows a list of all system predictions."""
+    if not session.get("is_admin"):
+        return redirect(url_for("login"))
+
+    try:
+        connection = sqlite3.connect(DB_FILE)
+        cursor = connection.cursor()
+        # Join with users to get emails
+        cursor.execute("""
+            SELECT u.email, p.prediction_score, p.pred_label, p.created_at
+            FROM predictions p
+            JOIN users u ON p.user_id = u.id
+            ORDER BY p.created_at DESC
+        """)
+        rows = cursor.fetchall()
+        connection.close()
+
+        preds_list = []
+        for r in rows:
+            preds_list.append({
+                "email": r[0],
+                "score": r[1],
+                "label": r[2],
+                "date": r[3][:16] if r[3] else "-"
+            })
+
+        return render_template(
+            "admin.html",
+            predictions=preds_list,
+            user_name=session.get("user_name"),
+            active_tab="predictions"
+        )
+    except Exception as e:
+        return str(e), 500
+
+
+@app.route("/admin/delete-user/<int:user_id>")
+def delete_user(user_id):
+    """Deletes a user and all their predictions."""
+    if not session.get("is_admin"):
+        return redirect(url_for("login"))
+
+    try:
+        connection = sqlite3.connect(DB_FILE)
+        cursor = connection.cursor()
+
+        # 1. Delete user's predictions first (integrity)
+        cursor.execute("DELETE FROM predictions WHERE user_id=?", (user_id,))
+
+        # 2. Delete the user
+        cursor.execute("DELETE FROM users WHERE id=?", (user_id,))
+
+        connection.commit()
+        connection.close()
+        return redirect(url_for("admin_users"))
+    except Exception as e:
+        return str(e), 500
 
 
 # ═══════════════════════════════════════════════════════════════

@@ -13,7 +13,7 @@
 
   Jinja variables:
     - prediction    : success percentage or None
-    - pred_label    : "Success" or "Failure"
+    - pred_label    : "Success" or "At Risk"
     - insights      : list of insight card dicts (title, icon, type, text)
     - history       : list of past prediction dicts (score, label, data, date)
     - state_map     : dict mapping state codes to full names
@@ -120,7 +120,7 @@
                 <th>Funding</th>
                 <th>Rounds</th>
                 <th>Industry</th>
-                <th>State</th>
+                <th>Ecosystem</th>
                 <th>Date &amp; Time</th>
               </tr>
             </thead>
@@ -148,11 +148,11 @@
 
                   <td>{{ h.data.get('funding_rounds', '-') }}</td>
 
-                  <!-- Industry: use display name from industry_map -->
+                  <!-- Sector: use display name from industry_map -->
                   <td>{{ industry_map.get(h.data.get('category_code', ''), h.data.get('category_code', '-')) }}</td>
 
-                  <!-- State: use full name from state_map -->
-                  <td>{{ state_map.get(h.data.get('state_code', ''), h.data.get('state_code', '-')) }}</td>
+                  <!-- Ecosystem: use full name from ecosystemmap -->
+                  <td>{{ ecosystemmap.get(h.data.get('ecosystem', ''), h.data.get('ecosystem', '-')) }}</td>
 
                   <td>{{ h.date }}</td>
                 </tr>

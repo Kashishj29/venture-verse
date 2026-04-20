@@ -90,7 +90,15 @@
           <!-- Password field -->
           <div class="field">
             <label>Password</label>
-            <input type="password" name="password" placeholder="Min 6 characters" required minlength="6">
+            <input type="password" name="password" id="password" placeholder="Min 8 characters" required>
+            
+            <!-- Password Strength Indicator -->
+            <div id="password-requirements" class="req-box">
+              <div id="length" class="req invalid">❌ 8+ characters</div>
+              <div id="uppercase" class="req invalid">❌ 1 uppercase letter</div>
+              <div id="number" class="req invalid">❌ 1 number</div>
+              <div id="special" class="req invalid">❌ 1 special char (!@#$%^&*)</div>
+            </div>
           </div>
 
           <!-- Confirm password field -->
@@ -100,7 +108,7 @@
           </div>
 
           <!-- Submit button -->
-          <button class="btn-submit" type="submit" style="margin-top:8px;">Create Account &rarr;</button>
+          <button class="btn-submit" type="submit" id="submit-btn" style="margin-top:8px;" disabled>Create Account &rarr;</button>
         </form>
 
         <!-- Link to login page -->
@@ -111,6 +119,70 @@
       </div>
     </div>
   </main>
+
+  <style>
+    /* Requirement Box Styles */
+    .req-box {
+      margin-top: 10px;
+      padding: 12px;
+      background: var(--slate-100);
+      border-radius: 8px;
+      border: 1px solid var(--slate-200);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .req {
+      font-size: 12px;
+      font-weight: 600;
+      transition: color 0.2s;
+    }
+    .req.invalid { color: var(--red); }
+    .req.valid { color: var(--green); }
+
+    /* Button disabled style */
+    .btn-submit:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none !important;
+      box-shadow: none !important;
+    }
+  </style>
+
+  <script>
+    const passwordInput = document.getElementById('password');
+    const submitBtn = document.getElementById('submit-btn');
+    
+    const requirements = {
+      length: { re: /.{8,}/, el: document.getElementById('length') },
+      uppercase: { re: /[A-Z]/, el: document.getElementById('uppercase') },
+      number: { re: /[0-9]/, el: document.getElementById('number') },
+      special: { re: /[!@#$%^&*]/, el: document.getElementById('special') }
+    };
+
+    passwordInput.addEventListener('input', () => {
+      const value = passwordInput.value;
+      let allValid = true;
+
+      for (const key in requirements) {
+        const isValid = requirements[key].re.test(value);
+        const el = requirements[key].el;
+        
+        if (isValid) {
+          el.classList.remove('invalid');
+          el.classList.add('valid');
+          el.innerHTML = '✅ ' + el.innerHTML.split(' ').slice(1).join(' ');
+        } else {
+          el.classList.remove('valid');
+          el.classList.add('invalid');
+          el.innerHTML = '❌ ' + el.innerHTML.split(' ').slice(1).join(' ');
+          allValid = false;
+        }
+      }
+
+      submitBtn.disabled = !allValid;
+    });
+  </script>
 
 </body>
 </html>

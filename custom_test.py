@@ -122,6 +122,7 @@ STUB_TEMPLATES = {
         {% if prediction is not none %}
             <p>Score: {{ prediction }}%</p>
             <p>Predicted: {{ pred_label }}</p>
+            <p>Ecosystem: {{ ecosystemmap[form_data.get('ecosystem')] if ecosystemmap else '' }}</p>
         {% endif %}
         {% if error %}<p class="error">{{ error }}</p>{% endif %}
     </body></html>""",
@@ -235,7 +236,7 @@ VALID_FORM = dict(
     has_roundD="0",                        # No Series D yet
     is_top500="0",                         # Not backed by top-500 VC
     category_code="software",              # Software industry
-    state_code="CA",                       # California
+    ecosystem="major_hub",                 # Major Hub (London/NY/SV)
 )
 
 
@@ -582,6 +583,7 @@ try:
     input_df = vv_app.build_input_df(VALID_FORM)
     probability = float(vv_app.model.predict_proba(input_df)[0][1])
 
+    pred_label = "Success" if probability >= 0.5 else "At Risk"
     passed = 0.0 <= probability <= 1.0
     record("UT04", "predict_proba() output is a valid probability in [0.0, 1.0]",
            passed,

@@ -188,25 +188,26 @@
           <div class="form-section">Location &amp; Industry</div>
 
           <div class="row">
-            <!-- State dropdown (populated from STATES list) -->
+            <!-- Ecosystem dropdown (populated from ECOSYSTEMS list) -->
             <div class="field">
-              <label>State</label>
-              <select name="state_code" required>
-                <option value="">Select state</option>
-                {% for s in states %}
-                  <option value="{{ s }}"
-                          {% if form_data.get('state_code')==s %}selected{% endif %}>
-                    {{ state_map[s] }}
+              <label>Startup Ecosystem</label>
+              <select name="ecosystem" required>
+                <option value="">Select ecosystem</option>
+                {% for e in ecosystems %}
+                  <option value="{{ e }}"
+                          {% if form_data.get('ecosystem')==e %}selected{% endif %}>
+                    {{ ecosystemmap[e] }}
                   </option>
                 {% endfor %}
               </select>
+              <div class="hint">Select the closest global startup ecosystem</div>
             </div>
 
-            <!-- Industry dropdown (populated from CATEGORIES list) -->
+            <!-- Sector dropdown (populated from CATEGORIES list) -->
             <div class="field">
-              <label>Industry</label>
+              <label>Sector</label>
               <select name="category_code" required>
-                <option value="">Select industry</option>
+                <option value="">Select sector</option>
                 {% for c in categories %}
                   <option value="{{ c }}"
                           {% if form_data.get('category_code')==c %}selected{% endif %}>
@@ -321,7 +322,7 @@
         <div class="mini">
           <div class="mini-title">Demo tip</div>
           <div class="mini-text">
-            Try $8M, 3 rounds, VC + Series A, California, Software
+            Try $8M, 3 rounds, VC + Series A, Major Hub, Software
             &rarr; then compare with $200K, 1 round, no VC.
           </div>
         </div>

@@ -12,7 +12,7 @@
 
   Jinja variables:
     - prediction       : success percentage or None
-    - pred_label       : "Success" or "Failure"
+    - pred_label       : "Success" or "At Risk" or None
     - risk_factors     : list of 6 factor dicts
     - model_comparison : dict with model names and metrics
     - user_name        : logged-in user's name
@@ -289,7 +289,7 @@
       new Chart(document.getElementById('doughnutChart'), {
         type: 'doughnut',
         data: {
-          labels: ['Success Probability', 'Risk / Failure Probability'],
+          labels: ['Success Probability', 'At Risk Probability'],
           datasets: [{
             data: [prediction, 100 - prediction],
             backgroundColor: [
