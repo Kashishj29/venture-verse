@@ -53,6 +53,11 @@
           <span class="user-badge">Hi, {{ user_name.split(' ')[0] }}</span>
           <a class="btn-nav" href="{{ url_for('logout') }}">Logout</a>
         </div>
+      {% else %}
+        <div class="nav-group-mobile">
+          <a class="nav-pill" href="{{ url_for('login') }}">Login</a>
+          <a class="btn-nav" href="{{ url_for('signup') }}">Sign Up</a>
+        </div>
       {% endif %}
 
     </div>
