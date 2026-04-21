@@ -3,7 +3,7 @@
 */
 
 
-/* 1. CSS VARIABLES */
+/* 1. CSS VARIABLES
    
    CSS variables (custom properties) let us define colours once
    and reuse them everywhere. To change the entire theme, just
@@ -55,7 +55,7 @@
 .bg-weak       { background-color: var(--red); }
 
 
-/* 2. BASE STYLES */
+/* 2. BASE STYLES
    
    These styles reset browser defaults and set up the global
    look and feel.
@@ -88,7 +88,7 @@ body {
 }
 
 
-/* 3. NAVIGATION BAR */
+/* 3. NAVIGATION BAR
    
    The sticky top bar that appears on every page.
    Contains: logo, navigation links, user greeting, logout button.
@@ -289,7 +289,7 @@ body {
 }
 
 
-/* 4. CARDS */
+/* 4. CARDS
    
    Cards are the main content containers throughout the app.
    They have a white background, rounded corners, and a shadow.
@@ -316,7 +316,7 @@ body {
 
 
 /* 5. LANDING PAGE */
-*/
+
 
 /* Hero section — big headline and subtitle */
 .landing-hero {

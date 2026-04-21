@@ -101,11 +101,6 @@ def hash_password(password):
     """
     Converts a plain-text password into a SHA-256 hash.
 
-    Why hash?  We never store passwords in plain text — that would
-    be a security risk. Instead, we store the hash. When a user
-    logs in, we hash what they typed and compare it to the stored
-    hash. If they match, the password is correct.
-
     Example:
         hash_password("hello123")
         → "f6e0a1e2910d1...4a8b1c3" (64-character hex string)
@@ -623,9 +618,9 @@ def send_welcome_email(to_email, user_name):
             server.starttls()
             server.login(MAIL_EMAIL, MAIL_PASSWORD)
             server.send_message(msg)
-        print(f"✅ Success: Welcome email sent to {to_email}")
+        print(f"SUCCESS: Welcome email sent to {to_email}")
     except Exception as e:
-        print(f"❌ Mail Error: {str(e)}")
+        print(f"ERROR: Mail Error: {str(e)}")
         pass  # Skip silently for the user, but log for the developer
 
 
@@ -639,8 +634,15 @@ def login():
         email = request.form.get("email", "").strip()
         password = request.form.get("password", "")
 
-        # Check database for user
+        # 1. Check for Admin Login
+        if email == ADMIN_EMAIL and password == ADMIN_PASSWORD:
+            session["user_id"] = 0  # Special ID for admin
+            session["user_name"] = "System Admin"
+            session["user_email"] = ADMIN_EMAIL
+            session["is_admin"] = True
+            return redirect(url_for("admin"))
 
+        # 2. Check database for regular user
         connection = sqlite3.connect(DB_FILE)
         cursor = connection.cursor()
         cursor.execute(
