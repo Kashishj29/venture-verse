@@ -1,28 +1,4 @@
-<!--
-  index.html — VentureVerse Prediction Page (Main Dashboard)
-  ============================================================
-  This is the MAIN page of the app (shown when logged in).
-
-  Left side:  Form to enter startup details
-  Right side: Prediction output (gauge, risk bars, links)
-
-  The page has two states:
-    1. BEFORE prediction: form is empty, right side says "Enter details..."
-    2. AFTER prediction:  form retains values, right side shows results
-
-  Jinja variables:
-    - prediction    : success percentage (e.g. 75.40) or None
-    - pred_label    : "Success" or "Failure" or None
-    - error         : error message string or None
-    - categories    : list of industry codes (e.g. ["software", "biotech"])
-    - states        : list of state codes (e.g. ["CA", "NY"])
-    - state_map     : dict mapping state codes to full names
-    - industry_map  : dict mapping industry codes to display names
-    - form_data     : dict of previously submitted form values
-    - risk_factors  : list of 6 factor dicts (factor, score, status)
-    - user_name     : logged-in user's name
-    - active_page   : "predict" (highlights nav link)
--->
+<!-- index.html - Main prediction page for the app -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -39,30 +15,22 @@
 
   <main class="container">
 
-    <!-- ═══════════════════════════════════════════════════════ -->
-    <!--  PAGE HEADER                                            -->
-    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- Page header -->
     <div class="page-header">
       <h1 class="animate-in">Startup Success Prediction</h1>
       <p class="animate-in delay-1">Enter early-stage indicators to estimate success probability using machine learning.</p>
     </div>
 
-    <!-- ═══════════════════════════════════════════════════════ -->
-    <!--  MAIN 2-COLUMN GRID                                     -->
-    <!--  Left column: Input form                                -->
-    <!--  Right column: Prediction results                       -->
-    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- Main grid for form and results -->
     <div class="main-grid">
 
-      <!-- ─────────────────────────────────────────────────── -->
-      <!--  LEFT COLUMN: Startup Details Form                    -->
-      <!-- ─────────────────────────────────────────────────── -->
+      <!-- Startup Details Form -->
       <div class="card animate-in delay-2">
         <div class="card-title">Enter Startup Details</div>
 
         <form action="/predict" method="POST" class="form">
 
-          <!-- ── Section 1: Funding Information ────────────── -->
+          <!-- Section 1: Funding -->
           <div class="form-section">Funding Information</div>
 
           <!-- Row: Total funding + number of rounds -->
@@ -106,7 +74,7 @@
             </div>
           </div>
 
-          <!-- ── Section 2: Company Profile ────────────────── -->
+          <!-- Section 2: Company Profile -->
           <div class="form-section">Company Profile</div>
 
           <!-- Row: Connections + milestones -->
@@ -142,8 +110,8 @@
             </div>
           </div>
 
-          <!-- ── Section 3: Investor Backing ───────────────── -->
-          <!--  Checkboxes for different types of investors       -->
+          <!-- Section 3: Investor Backing -->
+
           <div class="form-section">Investor Backing</div>
 
           <div class="toggle-row">
@@ -184,7 +152,7 @@
             </label>
           </div>
 
-          <!-- ── Section 4: Location & Industry ────────────── -->
+          <!-- Section 4: Location & Industry -->
           <div class="form-section">Location &amp; Industry</div>
 
           <div class="row">
@@ -218,7 +186,7 @@
             </div>
           </div>
 
-          <!-- ── Submit and Reset buttons ──────────────────── -->
+          <!-- Form actions -->
           <div class="actions">
             <button class="btn-submit" type="submit">Predict Success &rarr;</button>
             <a class="btn-ghost" href="{{ url_for('reset') }}">Reset</a>
@@ -227,14 +195,12 @@
         </form>
       </div>
 
-      <!-- ─────────────────────────────────────────────────── -->
-      <!--  RIGHT COLUMN: Prediction Output                      -->
-      <!-- ─────────────────────────────────────────────────── -->
+      <!-- Prediction Output -->
       <div class="card animate-in delay-3">
         <div class="card-title">Prediction Output</div>
 
         {% if prediction is not none %}
-          <!-- ── Results shown AFTER a prediction ──────────── -->
+          <!-- Show results if prediction exists -->
 
           <!-- Circular gauge showing the success percentage -->
           <div class="gauge-wrapper">
@@ -266,8 +232,8 @@
             </div>
           </div>
 
-          <!-- ── Factor Strength Bars ──────────────────────── -->
-          <!-- Shows 6 coloured progress bars for each risk factor -->
+          <!-- Show factor strength bars -->
+
           {% if risk_factors %}
           <div style="margin-top:20px;">
             <div class="chart-title">Factor Strength</div>
@@ -290,7 +256,7 @@
           </div>
           {% endif %}
 
-          <!-- ── Navigation buttons to other pages ─────────── -->
+          <!-- Navigation button links -->
           <div style="display:flex; gap:10px; margin-top:18px;">
             <a href="{{ url_for('charts') }}" class="btn-submit"
                style="text-decoration:none; text-align:center; font-size:14px;">
@@ -307,18 +273,18 @@
           </div>
 
         {% else %}
-          <!-- ── Placeholder shown BEFORE any prediction ───── -->
+          <!-- Placeholder before prediction -->
           <div class="empty">
             Enter startup details and click <b>Predict Success</b> to see results.
           </div>
         {% endif %}
 
-        <!-- ── Error message (if prediction failed) ────────── -->
+        <!-- Error messages -->
         {% if error %}
           <div class="error"><b>Error:</b> {{ error }}</div>
         {% endif %}
 
-        <!-- ── Demo tip for new users ──────────────────────── -->
+        <!-- Demo tips -->
         <div class="mini">
           <div class="mini-title">Demo tip</div>
           <div class="mini-text">
@@ -330,7 +296,7 @@
       </div>
     </div>
 
-    <!-- ── Footer ──────────────────────────────────────────── -->
+    <!-- Page footer -->
     <footer class="footer">
       VentureVerse &bull; Flask + scikit-learn + Chart.js &bull; University of Westminster
     </footer>

@@ -1,18 +1,4 @@
-<!--
-  signup.html — VentureVerse Registration Page
-  ==============================================
-  This page lets new users create an account.
-
-  How it works:
-    1. User enters name, email, password, and confirms password
-    2. Form submits a POST request to /signup (handled by app.py)
-    3. Server validates: all fields filled, passwords match, 6+ chars
-    4. If valid → creates account in database → auto-login → redirect
-    5. If invalid → this page reloads with an error message
-
-  Jinja variables:
-    - error : error message string (None if no error)
--->
+<!-- Template Page -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -28,9 +14,9 @@
 </head>
 <body>
 
-  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- - -->
   <!--  TOP NAVIGATION BAR                                     -->
-  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- - -->
   <header class="topbar">
     <div class="container topbar-inner">
 
@@ -54,10 +40,10 @@
     </div>
   </header>
 
-  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- - -->
   <!--  SIGNUP FORM                                             -->
   <!--  Centered card with name, email, password fields         -->
-  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- - -->
   <main class="container">
     <div class="auth-wrapper animate-in">
       <div class="auth-card">

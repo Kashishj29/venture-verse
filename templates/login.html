@@ -1,17 +1,4 @@
-<!--
-  login.html — VentureVerse Login Page
-  ====================================
-  This page lets returning users sign in with their email + password.
-
-  How it works:
-    1. User enters email and password into the form
-    2. Form submits a POST request to /login (handled by app.py)
-    3. If credentials are correct → redirect to prediction page
-    4. If wrong → this page reloads with an error message
-
-  Jinja variables:
-    - error : error message string (None if no error)
--->
+<!-- Template Page -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -27,10 +14,10 @@
 </head>
 <body>
 
-  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- - -->
   <!--  TOP NAVIGATION BAR                                     -->
   <!--  Shows the VentureVerse logo + Login/SignUp links        -->
-  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- - -->
   <header class="topbar">
     <div class="container topbar-inner">
 
@@ -54,10 +41,10 @@
     </div>
   </header>
 
-  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- - -->
   <!--  LOGIN FORM                                              -->
   <!--  Centered card with email + password fields              -->
-  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- - -->
   <main class="container">
     <div class="auth-wrapper animate-in">
       <div class="auth-card">

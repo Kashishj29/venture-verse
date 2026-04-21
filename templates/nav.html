@@ -1,27 +1,10 @@
-<!--
-  nav.html — VentureVerse Navigation Bar (Shared Component)
-  ==========================================================
-  This file is INCLUDED inside every logged-in page using:
-    {# include 'nav.html' #}
-
-  It shows:
-    - The VentureVerse logo (links to home)
-    - "Hi, [FirstName]" greeting
-    - Navigation links: Predict, Charts, Insights, About
-    - Logout button (only visible when logged in)
-
-  The "active" class highlights which page the user is currently on.
-
-  Jinja variables:
-    - user_name   : the logged-in user's full name (e.g. "Kashish Jadhav")
-    - active_page : which page is active ("predict", "charts", "insights", "about")
--->
+<!-- Template Page -->
 
 <!-- Sticky top navigation bar -->
 <header class="topbar">
   <div class="container topbar-inner">
 
-    <!-- ── Logo and Brand Name ─────────────────────────── -->
+    <!-- - Logo and Brand Name - -->
     <!-- Clicking the logo takes the user back to the home page -->
     <a href="{{ url_for('home') }}" class="brand" style="text-decoration: none; color: inherit;">
       <div class="logo-mark">
@@ -39,7 +22,7 @@
       <span></span>
     </button>
 
-    <!-- ── Navigation Links ────────────────────────────── -->
+    <!-- - Navigation Links - -->
     <div class="nav-links" id="nav-links">
 
       <a class="nav-pill {{ 'active' if active_page=='predict' }}" href="{{ url_for('home') }}">Predict</a>

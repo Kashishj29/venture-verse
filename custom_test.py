@@ -1,34 +1,14 @@
 """
-VentureVerse – Automated Test Suite
-=====================================
-This script runs 15 automated tests against the VentureVerse web app
-to verify that everything works correctly.
+VentureVerse - Automated Test Suite
+Runs tests against the VentureVerse web application.
 
-Two types of tests:
-  ┌─────────────────────────────────────────────────────────────────┐
-  │  SECTION A — BLACK-BOX TESTS (TC01–TC10)                       │
-  │  Simulates real user actions (signup, login, predict, etc.)     │
-  │  through Flask's built-in test client (like a fake browser).    │
-  │                                                                 │
-  │  SECTION B — WHITE-BOX UNIT TESTS (UT01–UT05)                  │
-  │  Calls internal Python functions directly to verify the maths  │
-  │  and logic is correct.                                         │
-  └─────────────────────────────────────────────────────────────────┘
-
-How to run:
-    python custom_test.py
-
-Prerequisites:
-    - ventureverse_model.joblib must exist (run train_model.py first)
-
-Author : Kashish Jadhav (w2035589)
-Module : 6COSC023W — BSc Computer Science Final Project
-Uni    : University of Westminster, 2025–2026
+Kashish Jadhav (w2035589)
+BSc Computer Science Final Project
+University of Westminster, 2025-2026
 """
 
-# ═══════════════════════════════════════════════════════════════
-#  IMPORTS
-# ═══════════════════════════════════════════════════════════════
+# Imports
+
 
 import sys
 import os
@@ -41,9 +21,8 @@ import numpy as np
 sys.stdout.reconfigure(encoding='utf-8')
 
 
-# ═══════════════════════════════════════════════════════════════
-#  TERMINAL COLOURS — makes output easier to read
-# ═══════════════════════════════════════════════════════════════
+# Terminal Colors
+
 
 # These are ANSI escape codes that colour text in the terminal.
 # They only work in terminals that support colours (most do).
@@ -55,9 +34,8 @@ BOLD = "\033[1m"      # Bold text
 RESET = "\033[0m"     # Reset to normal text
 
 
-# ═══════════════════════════════════════════════════════════════
-#  TEST RESULT TRACKING
-# ═══════════════════════════════════════════════════════════════
+# Test Result Tracking
+
 
 # This list stores every test result as a tuple:
 # (test_id, test_name, "PASS" or "FAIL", optional_note)
@@ -88,9 +66,8 @@ def record(test_id, test_name, passed, note=""):
         print(f"         {YELLOW}↳ {note}{RESET}")
 
 
-# ═══════════════════════════════════════════════════════════════
-#  SETUP — Prepare a safe test environment
-# ═══════════════════════════════════════════════════════════════
+# Preparation
+
 #
 #  We do two things here:
 #    1. Create a temporary throw-away database (not the real one!)
@@ -105,15 +82,7 @@ TEST_DB = tempfile.mktemp(suffix=".db")
 project_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, project_dir)
 
-# ── Create Stub Templates ───────────────────────────────────
-# Flask routes call render_template("login.html") etc., which
-# needs actual HTML files to exist. Instead of using the real
-# frontend (which has complex CSS/JS), we create tiny stub
-# files with just enough HTML for our tests to work.
-#
-# For example, the signup page shows "Email already registered"
-# as an error. Our stub template includes the Jinja variable
-# {{ error }} so the test can check for that text.
+# Stub Templates for testing
 
 STUB_TEMPLATES = {
     "landing.html": "<html><body>Welcome to VentureVerse</body></html>",
@@ -170,9 +139,8 @@ for filename, content in STUB_TEMPLATES.items():
         file.write(content)
 
 
-# ═══════════════════════════════════════════════════════════════
-#  IMPORT THE APP — load the Flask application for testing
-# ═══════════════════════════════════════════════════════════════
+# Load the Flask App
+
 
 APP_LOADED = False
 client = None       # Flask test client (simulates a browser)
@@ -212,9 +180,8 @@ except Exception as exc:
     print(f"    → Run:  python train_model.py   then try again.{RESET}\n")
 
 
-# ═══════════════════════════════════════════════════════════════
-#  TEST DATA — reusable form data for predictions
-# ═══════════════════════════════════════════════════════════════
+# Test Data
+
 
 # This represents a strong startup profile (likely to succeed).
 # Used across multiple tests so we don't have to type it each time.
@@ -252,19 +219,10 @@ def login_as_test_user():
     )
 
 
-# ═══════════════════════════════════════════════════════════════
-#  SECTION A — BLACK-BOX TESTS (TC01 – TC10)
-#
-#  What are black-box tests?
-#    We test the app from the OUTSIDE, like a real user would.
-#    We send HTTP requests (GET/POST) and check the response.
-#    We don't look at internal code — just inputs and outputs.
-# ═══════════════════════════════════════════════════════════════
+# SECTION A: BLACK-BOX TESTS
 
-print(f"\n{BOLD}{CYAN}{'=' * 64}{RESET}")
-print(f"{BOLD}{CYAN}  SECTION A — BLACK-BOX TESTS  (TC01–TC10){RESET}")
-print(f"{BOLD}{CYAN}  Simulating real user actions through the browser{RESET}")
-print(f"{BOLD}{CYAN}{'=' * 64}{RESET}\n")
+
+print("\n--- SECTION A: BLACK-BOX TESTS ---")
 
 if not APP_LOADED:
     # If the app couldn't load, skip all tests
@@ -273,10 +231,7 @@ if not APP_LOADED:
                "Run: python train_model.py  first")
 else:
 
-    # ──────────────────────────────────────────────────────────
     # TC01: Register a new user account
-    # Purpose: Verify that new users can create an account
-    # ──────────────────────────────────────────────────────────
     try:
         response = client.post("/signup", data=dict(
             full_name="Test User",
@@ -291,10 +246,7 @@ else:
     except Exception as e:
         record("TC01", "Register with valid credentials", False, str(e))
 
-    # ──────────────────────────────────────────────────────────
-    # TC02: Try to register with an email that already exists
-    # Purpose: The app must block duplicate email addresses
-    # ──────────────────────────────────────────────────────────
+    # TC02: Trap duplicate emails
     try:
         response = client.post("/signup", data=dict(
             full_name="Copy Cat",
@@ -310,10 +262,7 @@ else:
     except Exception as e:
         record("TC02", "Register with duplicate email — error message shown", False, str(e))
 
-    # ──────────────────────────────────────────────────────────
-    # TC03: Login with correct email and password
-    # Purpose: The login system must accept valid credentials
-    # ──────────────────────────────────────────────────────────
+    # TC03: Login with correct credentials
     try:
         client.get("/logout")  # Make sure we're logged out first
         response = client.post("/login", data=dict(
@@ -327,10 +276,7 @@ else:
     except Exception as e:
         record("TC03", "Login with correct credentials", False, str(e))
 
-    # ──────────────────────────────────────────────────────────
-    # TC04: Login with the wrong password
-    # Purpose: The app must reject incorrect passwords
-    # ──────────────────────────────────────────────────────────
+    # TC04: Login with wrong password
     try:
         client.get("/logout")
         response = client.post("/login", data=dict(
@@ -345,10 +291,7 @@ else:
     except Exception as e:
         record("TC04", "Login with wrong password — error message shown", False, str(e))
 
-    # ──────────────────────────────────────────────────────────
-    # TC05: After logout, prediction should be blocked
-    # Purpose: Protected pages must not be accessible after logout
-    # ──────────────────────────────────────────────────────────
+    # TC05: Session management check
     try:
         login_as_test_user()
         client.get("/logout", follow_redirects=True)
@@ -365,10 +308,7 @@ else:
     except Exception as e:
         record("TC05", "Logout clears session — /predict blocked after logout", False, str(e))
 
-    # ──────────────────────────────────────────────────────────
-    # TC06: Submit prediction form with valid inputs
-    # Purpose: Core feature — the ML model must return a score
-    # ──────────────────────────────────────────────────────────
+    # TC06: Standard prediction flow
     try:
         login_as_test_user()
         response = client.post("/predict", data=VALID_FORM, follow_redirects=True)
@@ -383,13 +323,7 @@ else:
     except Exception as e:
         record("TC06", "Prediction form with valid inputs returns a score", False, str(e))
 
-    # ──────────────────────────────────────────────────────────
-    # TC07: Submit form with blank funding field
-    # Purpose: App should warn the user about missing data
-    # Note:   This is an INTENTIONAL FAIL — the app silently
-    #         accepts blank fields instead of showing a warning.
-    #         We document this in Chapter 7 of the FYP report.
-    # ──────────────────────────────────────────────────────────
+    # TC07: Validation check (Missing data)
     try:
         login_as_test_user()
         bad_form = dict(VALID_FORM)
@@ -410,10 +344,7 @@ else:
     except Exception as e:
         record("TC07", "Missing funding field triggers a validation warning", False, str(e))
 
-    # ──────────────────────────────────────────────────────────
-    # TC08: Charts page loads correctly
-    # Purpose: The charts page must render without errors
-    # ──────────────────────────────────────────────────────────
+    # TC08: Render charts
     try:
         login_as_test_user()
         response = client.get("/charts", follow_redirects=True)
@@ -427,10 +358,7 @@ else:
     except Exception as e:
         record("TC08", "Charts page renders correctly after a prediction", False, str(e))
 
-    # ──────────────────────────────────────────────────────────
-    # TC09: PDF export generates a downloadable file
-    # Purpose: The report export must produce a real file
-    # ──────────────────────────────────────────────────────────
+    # TC09: PDF generation check
     try:
         login_as_test_user()
         # Run a prediction first so the session has data for the PDF
@@ -448,10 +376,7 @@ else:
     except Exception as e:
         record("TC09", "PDF export (/download-insights) generates a file", False, str(e))
 
-    # ──────────────────────────────────────────────────────────
-    # TC10: Unauthenticated access to /predict is blocked
-    # Purpose: Security — protected pages must redirect to login
-    # ──────────────────────────────────────────────────────────
+    # TC10: Security check (Bypass)
     try:
         client.get("/logout")
         response = client.post("/predict", data=VALID_FORM, follow_redirects=False)
@@ -464,26 +389,13 @@ else:
         record("TC10", "Unauthenticated user redirected to /login page", False, str(e))
 
 
-# ═══════════════════════════════════════════════════════════════
-#  SECTION B — WHITE-BOX UNIT TESTS (UT01 – UT05)
-#
-#  What are white-box tests?
-#    We call internal Python functions directly, passing in known
-#    inputs and checking the outputs match what we mathematically
-#    expect. No HTTP, no browser — pure function testing.
-# ═══════════════════════════════════════════════════════════════
-
-print(f"\n{BOLD}{CYAN}{'=' * 64}{RESET}")
-print(f"{BOLD}{CYAN}  SECTION B — WHITE-BOX UNIT TESTS  (UT01–UT05){RESET}")
-print(f"{BOLD}{CYAN}  Calling internal Python functions directly{RESET}")
-print(f"{BOLD}{CYAN}{'=' * 64}{RESET}\n")
+# SECTION B: WHITE-BOX UNIT TESTS
 
 
-# ──────────────────────────────────────────────────────────────
-# UT01: hash_password() produces a consistent SHA-256 digest
-# Why: If the same password gives a different hash each time,
-#      login would break — no user could ever log in twice.
-# ──────────────────────────────────────────────────────────────
+print("\n--- SECTION B: WHITE-BOX UNIT TESTS ---")
+
+
+# UT01: Password hashing consistency
 try:
     if not APP_LOADED:
         raise RuntimeError("App not loaded — run train_model.py first")
@@ -506,12 +418,7 @@ except Exception as e:
     record("UT01", "hash_password() returns consistent 64-char SHA-256 digest", False, str(e))
 
 
-# ──────────────────────────────────────────────────────────────
-# UT02: build_input_df() computes engineered features correctly
-# Why: log_funding and avg_funding_per_round are fed straight
-#      into the ML model. If the maths is wrong, every single
-#      prediction will be wrong — silently.
-# ──────────────────────────────────────────────────────────────
+# UT02: Feature engineering maths check
 try:
     if not APP_LOADED:
         raise RuntimeError("App not loaded")
@@ -550,11 +457,7 @@ except Exception as e:
     record("UT02", "build_input_df() computes log_funding and avg_funding_per_round", False, str(e))
 
 
-# ──────────────────────────────────────────────────────────────
-# UT03: The ML model loads from its .joblib file
-# Why: If this file is missing or corrupt, Flask crashes on
-#      startup and no user can access anything at all.
-# ──────────────────────────────────────────────────────────────
+# UT03: Model file integrity
 try:
     if not APP_LOADED:
         raise RuntimeError("App not loaded")
@@ -571,11 +474,7 @@ except Exception as e:
     record("UT03", "XGBoost model loads from .joblib file without error", False, str(e))
 
 
-# ──────────────────────────────────────────────────────────────
-# UT04: predict_proba() output is between 0.0 and 1.0
-# Why: A probability MUST be in [0, 1]. If it falls outside
-#      this range, the model or pipeline is fundamentally broken.
-# ──────────────────────────────────────────────────────────────
+# UT04: Output range validation
 try:
     if not APP_LOADED:
         raise RuntimeError("App not loaded")
@@ -593,11 +492,7 @@ except Exception as e:
     record("UT04", "predict_proba() output is a valid probability in [0.0, 1.0]", False, str(e))
 
 
-# ──────────────────────────────────────────────────────────────
-# UT05: compute_risk_breakdown() returns exactly 6 factors
-# Why: The Charts and Insights pages both loop over exactly
-#      6 factors. One missing or extra factor would break the UI.
-# ──────────────────────────────────────────────────────────────
+# UT05: UI factor structure check
 try:
     if not APP_LOADED:
         raise RuntimeError("App not loaded")
@@ -618,9 +513,8 @@ except Exception as e:
     record("UT05", "compute_risk_breakdown() returns 6 correctly structured factors", False, str(e))
 
 
-# ═══════════════════════════════════════════════════════════════
-#  CLEAN UP — remove temporary files
-# ═══════════════════════════════════════════════════════════════
+# Cleanup
+
 
 try:
     os.remove(TEST_DB)
@@ -633,28 +527,23 @@ except Exception:
     pass
 
 
-# ═══════════════════════════════════════════════════════════════
-#  FINAL SUMMARY TABLE — print all results
-# ═══════════════════════════════════════════════════════════════
+# Final Summary
+
 
 total_tests = len(results)
 passed_count = sum(1 for r in results if r[2] == "PASS")
 failed_count = total_tests - passed_count
 
-print(f"\n\n{BOLD}{'═' * 72}{RESET}")
-print(f"{BOLD}  VENTUREVERSE — FULL TEST RESULTS SUMMARY{RESET}")
-print(f"{BOLD}{'═' * 72}{RESET}")
-print(f"  {BOLD}{'ID':<8}{'Test Name':<56}{'Result'}{RESET}")
-print(f"  {'─' * 8}{'─' * 56}{'─' * 8}")
+print("\nSUMMARY")
 
 for (test_id, test_name, status, note) in results:
     mark = f"{GREEN}PASS{RESET}" if status == "PASS" else f"{RED}FAIL{RESET}"
     short_name = test_name[:55] + "…" if len(test_name) > 56 else test_name
     print(f"  {BOLD}{test_id:<8}{RESET}{short_name:<56}{mark}")
 
-print(f"\n  {'─' * 70}")
-print(f"  Total: {total_tests}   │   "
-      f"{GREEN}{BOLD}Passed: {passed_count}{RESET}   │   "
+print(f"\n  {'-' * 70}")
+print(f"  Total: {total_tests}   -   "
+      f"{GREEN}{BOLD}Passed: {passed_count}{RESET}   -   "
       f"{RED}{BOLD}Failed: {failed_count}{RESET}")
 
 # Explain the intentional TC07 failure
@@ -672,6 +561,4 @@ if only_tc07_failed:
 elif failed_count == 0:
     print(f"\n  {GREEN}🎉  All tests passed!{RESET}")
 
-print(f"\n{BOLD}{'═' * 72}{RESET}")
-print(f"  {CYAN}VentureVerse  ·  University of Westminster  ·  6COSC023W{RESET}")
-print(f"{BOLD}{'═' * 72}{RESET}\n")
+print("\nVentureVerse Project")

@@ -1,38 +1,9 @@
-/* ============================================================
-   VentureVerse — Main Stylesheet
-   ============================================================
-   
-   This CSS file styles the entire VentureVerse web application.
-   
-   Design system:
-     - Theme      : Light premium theme (white + blue/slate)
-     - Font       : Inter (Google Fonts) — clean, modern sans-serif
-     - Layout     : Card-based design with rounded corners
-     - Colours    : Blue primary, slate greys, green/red/amber accents
-     - Animations : Subtle fade-up transitions on page load
-   
-   Sections in this file:
-     1. CSS Variables (colour palette, spacing)
-     2. Base / Reset styles
-     3. Navigation bar (topbar)
-     4. Cards (reusable card component)
-     5. Landing page (hero, features, stats)
-     6. Prediction page (form, gauge, risk bars)
-     7. Charts page (dashboard grid)
-     8. Auth pages (login, signup)
-     9. About page
-    10. Insights page
-    11. Footer
-    12. Animations
-   
-   Author : Kashish Jadhav (w2035589)
-   Uni    : University of Westminster, 2025–2026
-   ============================================================ */
+/* VentureVerse Main Stylesheet 
+   Handles layout, colours, and animations for the app 
+*/
 
 
-/* ═══════════════════════════════════════════════════════════════
-   1. CSS VARIABLES — The Design System Colour Palette
-   ═══════════════════════════════════════════════════════════════
+/* 1. CSS VARIABLES */
    
    CSS variables (custom properties) let us define colours once
    and reuse them everywhere. To change the entire theme, just
@@ -84,9 +55,7 @@
 .bg-weak       { background-color: var(--red); }
 
 
-/* ═══════════════════════════════════════════════════════════════
-   2. BASE / RESET STYLES
-   ═══════════════════════════════════════════════════════════════
+/* 2. BASE STYLES */
    
    These styles reset browser defaults and set up the global
    look and feel.
@@ -119,9 +88,7 @@ body {
 }
 
 
-/* ═══════════════════════════════════════════════════════════════
-   3. NAVIGATION BAR (Topbar)
-   ═══════════════════════════════════════════════════════════════
+/* 3. NAVIGATION BAR */
    
    The sticky top bar that appears on every page.
    Contains: logo, navigation links, user greeting, logout button.
@@ -232,7 +199,7 @@ body {
   transform: translateY(-1px);   /* Subtle lift effect */
 }
 
-/* ── Mobile Menu Toggle ────────────────────────────────────── */
+/* - Mobile Menu Toggle - */
 .menu-toggle {
   display: none;             /* Hidden on desktop */
   flex-direction: column;
@@ -258,7 +225,7 @@ body {
 .menu-toggle.active span:nth-child(2) { opacity: 0; }
 .menu-toggle.active span:nth-child(3) { transform: translateY(-8px) rotate(-45deg); }
 
-/* ── Responsive Navbar (Media Query) ───────────────────────── */
+/* - Responsive Navbar (Media Query) - */
 @media (max-width: 768px) {
   .menu-toggle { display: flex; }
 
@@ -322,9 +289,7 @@ body {
 }
 
 
-/* ═══════════════════════════════════════════════════════════════
-   4. CARDS — Reusable Card Component
-   ═══════════════════════════════════════════════════════════════
+/* 4. CARDS */
    
    Cards are the main content containers throughout the app.
    They have a white background, rounded corners, and a shadow.
@@ -350,9 +315,7 @@ body {
 }
 
 
-/* ═══════════════════════════════════════════════════════════════
-   5. LANDING PAGE — Public-facing marketing page
-   ═══════════════════════════════════════════════════════════════
+/* 5. LANDING PAGE */
 */
 
 /* Hero section — big headline and subtitle */
@@ -477,8 +440,10 @@ body {
 /* 3-column grid for feature cards */
 .features-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+  max-width: 900px;
+  margin: 0 auto;
 }
 
 /* Stack to 1 column on mobile */
@@ -558,10 +523,7 @@ body {
 }
 
 
-/* ═══════════════════════════════════════════════════════════════
-   6. PREDICTION PAGE — Form, Gauge, Risk Bars
-   ═══════════════════════════════════════════════════════════════
-*/
+/* 6. PREDICTION PAGE */
 
 /* 2-column layout: form on left, results on right */
 .main-grid {
@@ -592,7 +554,7 @@ body {
   line-height: 1.5;
 }
 
-/* ── Form Styles ────────────────────────────────────────────── */
+/* Form Styles */
 
 /* 2-column form row */
 .form .row {
@@ -788,7 +750,7 @@ select { cursor: pointer; }
 }
 
 
-/* ── Circular Gauge (SVG) ──────────────────────────────────── */
+/* Circular Gauge */
 /*
    The gauge is an SVG circle with a dashed stroke.
    stroke-dasharray = total circumference
@@ -867,7 +829,7 @@ select { cursor: pointer; }
 .pred-status.failure { color: var(--red); }
 
 
-/* ── Risk Factor Bars ──────────────────────────────────────── */
+/* Risk Factor Bars */
 /*
    Horizontal progress bars showing 6 factor scores.
    Each has a coloured fill based on status (strong/moderate/weak).
@@ -920,7 +882,7 @@ select { cursor: pointer; }
 .risk-bar-fill.weak      { background: linear-gradient(90deg, var(--red),   #f87171); }
 
 
-/* ── Notes, Errors, Tips ───────────────────────────────────── */
+/* Notes, Errors, Tips */
 
 .note {
   margin-top: 16px;
@@ -973,10 +935,7 @@ select { cursor: pointer; }
 }
 
 
-/* ═══════════════════════════════════════════════════════════════
-   7. CHARTS PAGE — Dashboard Grid
-   ═══════════════════════════════════════════════════════════════
-*/
+/* 7. CHARTS PAGE */
 
 /* 2-column grid for chart cards */
 .dashboard-grid {
@@ -1046,10 +1005,7 @@ select { cursor: pointer; }
 }
 
 
-/* ═══════════════════════════════════════════════════════════════
-   8. AUTH PAGES — Login and Signup
-   ═══════════════════════════════════════════════════════════════
-*/
+/* 8. AUTH PAGES */
 
 /* Vertically and horizontally centred wrapper */
 .auth-wrapper {
@@ -1111,10 +1067,7 @@ select { cursor: pointer; }
 }
 
 
-/* ═══════════════════════════════════════════════════════════════
-   9. ABOUT PAGE
-   ═══════════════════════════════════════════════════════════════
-*/
+/* 9. ABOUT PAGE */
 
 /* 2-column grid for about cards */
 .about-grid {
@@ -1208,10 +1161,7 @@ select { cursor: pointer; }
 .dev-detail-value { font-size: 13px; color: var(--slate-900); font-weight: 700; }
 
 
-/* ═══════════════════════════════════════════════════════════════
-   10. INSIGHTS PAGE
-   ═══════════════════════════════════════════════════════════════
-*/
+/* 10. INSIGHTS PAGE */
 
 /* Prediction banner (large coloured bar at top of insights) */
 .insight-banner {
@@ -1362,10 +1312,7 @@ select { cursor: pointer; }
 }
 
 
-/* ═══════════════════════════════════════════════════════════════
-   11. FOOTER
-   ═══════════════════════════════════════════════════════════════
-*/
+/* 11. FOOTER */
 
 .footer {
   padding: 32px 0 40px;
@@ -1377,16 +1324,7 @@ select { cursor: pointer; }
 }
 
 
-/* ═══════════════════════════════════════════════════════════════
-   12. ANIMATIONS — Fade-up entrance effect
-   ═══════════════════════════════════════════════════════════════
-   
-   Elements with class "animate-in" start invisible and
-   fade up into view when the page loads.
-   
-   Add "delay-1" through "delay-5" to stagger the animations
-   so elements appear one after another.
-*/
+/* 12. ANIMATIONS */
 
 @keyframes fadeUp {
   from { opacity: 0; transform: translateY(20px); }
@@ -1405,10 +1343,7 @@ select { cursor: pointer; }
 .delay-4 { animation-delay: 0.4s; }
 .delay-5 { animation-delay: 0.5s; }
 
-/* ═══════════════════════════════════════════════════════════════
-   13. RESPONSIVE LANDING PAGE FIXES
-   ═══════════════════════════════════════════════════════════════
-*/
+/* 13. RESPONSIVE LANDING PAGE FIXES */
 
 /* Make topbar transparent on landing page to blend with hero */
 .landing-page .topbar {

@@ -161,7 +161,7 @@
 
     <div class="admin-layout animate-in delay-1">
       
-      <!-- ── Sidebar Nav ──────────────────────────────────── -->
+      <!-- - Sidebar Nav - -->
       <aside class="admin-sidebar">
         <a href="{{ url_for('admin') }}" class="sidebar-link {{ 'active' if active_tab == 'dashboard' }}">
           <span>📊</span> Dashboard
@@ -174,11 +174,11 @@
         </a>
       </aside>
 
-      <!-- ── Main Content Area ────────────────────────────── -->
+      <!-- - Main Content Area - -->
       <section class="admin-content">
 
         {% if active_tab == 'dashboard' %}
-          <!-- ── Dashboard Tab ────────────────────────────── -->
+          <!-- - Dashboard Tab - -->
           <div class="stats-grid">
             <div class="stat-card">
               <div class="stat-val">{{ total_users }}</div>
@@ -209,7 +209,7 @@
           {% endif %}
 
         {% elif active_tab == 'users' %}
-          <!-- ── Users Management Tab ──────────────────── -->
+          <!-- - Users Management Tab - -->
           <div class="admin-table-card">
             <div class="card-title" style="margin-bottom: 20px;">Registered Users</div>
             <table>
@@ -247,7 +247,7 @@
           </div>
 
         {% elif active_tab == 'predictions' %}
-          <!-- ── Predictions Log Tab ──────────────────── -->
+          <!-- - Predictions Log Tab - -->
           <div class="admin-table-card">
             <div class="card-title" style="margin-bottom: 20px;">System Prediction Logs</div>
             <table>

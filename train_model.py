@@ -1,35 +1,14 @@
 """
-VentureVerse – Model Training Pipeline
-========================================
-This script trains machine learning models to predict whether a
-startup will succeed (be acquired) or fail (close down).
+VentureVerse - Model Training Pipeline
+Trains ML models to predict startup success based on Crunchbase data.
 
-Dataset:
-  - Source    : Kaggle → manishkc06/startup-success-prediction
-  - Origin    : Crunchbase (public, pre-2014 US startups)
-  - File      : startup_data.csv
-  - Target    : status → 1 = acquired (success), 0 = closed (failure)
-
-Models trained:
-  1. Logistic Regression  (simple, interpretable baseline)
-  2. Random Forest        (ensemble of decision trees)
-  3. XGBoost             (gradient-boosted trees — usually the best)
-
-Output files:
-  - ventureverse_model.joblib   → the best model, saved for the web app
-  - model_results_summary.json  → all metrics, used in charts/reports
-
-How to run:
-  python train_model.py
-
-Author : Kashish Jadhav (w2035589)
-Module : 6COSC023W — BSc Computer Science Final Project
-Uni    : University of Westminster, 2025–2026
+Kashish Jadhav (w2035589)
+BSc Computer Science Final Project
+University of Westminster, 2025-2026
 """
 
-# ═══════════════════════════════════════════════════════════════
-#  IMPORTS
-# ═══════════════════════════════════════════════════════════════
+# Imports
+
 
 import json
 import warnings
@@ -76,9 +55,8 @@ from xgboost import XGBClassifier
 warnings.filterwarnings("ignore")
 
 
-# ═══════════════════════════════════════════════════════════════
-#  CONFIGURATION
-# ═══════════════════════════════════════════════════════════════
+# Configuration
+
 
 DATA_FILE = "startup_data.csv"                 # Input dataset
 MODEL_OUT = "ventureverse_model.joblib"        # Where to save the best model
@@ -87,9 +65,8 @@ RANDOM_STATE = 42                              # Fixed seed for reproducibility
 TEST_SIZE = 0.20                               # 20% of data held out for testing
 
 
-# ═══════════════════════════════════════════════════════════════
-#  STEP 1: Load and Clean the Dataset
-# ═══════════════════════════════════════════════════════════════
+# Step 1: Data Cleaning
+
 
 def load_and_clean(path):
     """
@@ -116,7 +93,7 @@ def load_and_clean(path):
     print(f"    Shape : {df.shape}")
     print(f"    Columns: {df.columns.tolist()}\n")
 
-    # ── Create the target column ─────────────────────────────
+    # - Create the target column -
     # The dataset has a "status" column with values like
     # "acquired", "closed", "operating". We only want the first two.
     if "status" not in df.columns:
@@ -138,9 +115,8 @@ def load_and_clean(path):
     return df
 
 
-# ═══════════════════════════════════════════════════════════════
-#  STEP 2: Feature Engineering
-# ═══════════════════════════════════════════════════════════════
+# Step 2: Feature Engineering
+
 
 def engineer_features(df):
     """
@@ -163,7 +139,7 @@ def engineer_features(df):
         DataFrame with new engineered features added
     """
 
-    # ── Convert numeric columns to proper number types ───────
+    # - Convert numeric columns to proper number types -
     # Some columns might have been read as strings; fix that.
     numeric_columns = [
         "age_first_funding_year",
@@ -181,7 +157,7 @@ def engineer_features(df):
         if col in df.columns:
             df[col] = pd.to_numeric(df[col], errors="coerce")
 
-    # ── New Feature: Funding Duration ────────────────────────
+    # - New Feature: Funding Duration -
     # How many years passed between first and last funding round.
     # A longer duration can indicate sustained investor interest.
     if "age_first_funding_year" in df.columns and "age_last_funding_year" in df.columns:
@@ -189,21 +165,21 @@ def engineer_features(df):
             df["age_last_funding_year"] - df["age_first_funding_year"]
         ).clip(lower=0)  # clip(lower=0) means: no negative values
 
-    # ── New Feature: Average Funding Per Round ───────────────
+    # - New Feature: Average Funding Per Round -
     # Total funding divided by number of rounds.
     # Higher values mean bigger rounds (more investor confidence).
     if "funding_total_usd" in df.columns and "funding_rounds" in df.columns:
         safe_rounds = df["funding_rounds"].replace(0, 1)  # Avoid dividing by zero
         df["avg_funding_per_round"] = df["funding_total_usd"] / safe_rounds
 
-    # ── New Feature: Log-Transformed Funding ─────────────────
+    # - New Feature: Log-Transformed Funding -
     # Funding ranges from $0 to $1 billion+. That huge range
     # makes it hard for models to learn. Log-transform compresses
     # it: log(1 + 10000) ≈ 9.2, log(1 + 100000000) ≈ 18.4
     if "funding_total_usd" in df.columns:
         df["log_funding"] = np.log1p(df["funding_total_usd"].fillna(0))
 
-    # ── Consolidate Industry Categories ──────────────────────
+    # - Consolidate Industry Categories -
     # Keep the 12 most common industries; group the rest as "other".
     # This prevents the model from overfitting to rare categories
     # with only a handful of examples.
@@ -214,7 +190,7 @@ def engineer_features(df):
             df["category_code"].isin(top_categories), "other"
         )
 
-    # ── Consolidate State Codes ──────────────────────────────
+    # - Consolidate State Codes -
     # Keep top 8 states; group the rest as "other"
     if "state_code" in df.columns:
         df["state_code"] = df["state_code"].fillna("other").astype(str)
@@ -226,9 +202,8 @@ def engineer_features(df):
     return df
 
 
-# ═══════════════════════════════════════════════════════════════
-#  STEP 3: Select Features
-# ═══════════════════════════════════════════════════════════════
+# Step 3: Feature Selection
+
 
 def select_features(df):
     """
@@ -254,7 +229,7 @@ def select_features(df):
         categorical_features: list of categorical column names
     """
 
-    # ── Define the three groups of features ──────────────────
+    # - Define the three groups of features -
     numeric_features = [
         "age_first_funding_year",     # Years from founding to first funding
         "age_last_funding_year",      # Years from founding to latest funding
@@ -310,9 +285,8 @@ def select_features(df):
     return X, y, numeric_features, binary_features, categorical_features
 
 
-# ═══════════════════════════════════════════════════════════════
-#  STEP 4: Build the Preprocessing Pipeline
-# ═══════════════════════════════════════════════════════════════
+# Step 4: Preprocessing
+
 
 def build_preprocessor(numeric_features, binary_features, categorical_features):
     """
@@ -371,9 +345,8 @@ def build_preprocessor(numeric_features, binary_features, categorical_features):
     return preprocessor
 
 
-# ═══════════════════════════════════════════════════════════════
-#  STEP 5: Define the ML Models
-# ═══════════════════════════════════════════════════════════════
+# Step 5: Model Definitions
+
 
 def build_models(preprocessor):
     """
@@ -396,7 +369,7 @@ def build_models(preprocessor):
     """
 
     models = {
-        # ── Model 1: Logistic Regression ─────────────────────
+        # - Model 1: Logistic Regression -
         # Simple linear model. Good for understanding which
         # features matter most. Fast to train.
         "Logistic Regression": Pipeline([
@@ -409,7 +382,7 @@ def build_models(preprocessor):
             )),
         ]),
 
-        # ── Model 2: Random Forest ──────────────────────────
+        # - Model 2: Random Forest -
         # Builds 500 decision trees and averages their predictions.
         # More robust than a single tree, handles non-linear patterns.
         "Random Forest": Pipeline([
@@ -423,7 +396,7 @@ def build_models(preprocessor):
             )),
         ]),
 
-        # ── Model 3: XGBoost ────────────────────────────────
+        # - Model 3: XGBoost -
         # State-of-the-art gradient boosting. Builds trees
         # sequentially, each one correcting the previous errors.
         "XGBoost": Pipeline([
@@ -445,9 +418,8 @@ def build_models(preprocessor):
     return models
 
 
-# ═══════════════════════════════════════════════════════════════
-#  STEP 6: Cross-Validate All Models
-# ═══════════════════════════════════════════════════════════════
+# Step 6: Cross-Validation
+
 
 def cross_validate_models(models, X_train, y_train):
     """
@@ -509,9 +481,8 @@ def cross_validate_models(models, X_train, y_train):
     return results
 
 
-# ═══════════════════════════════════════════════════════════════
-#  STEP 7: Evaluate on Holdout Test Set
-# ═══════════════════════════════════════════════════════════════
+# Step 7: Final Evaluation
+
 
 def evaluate_holdout(model, X_test, y_test):
     """
@@ -558,9 +529,8 @@ def evaluate_holdout(model, X_test, y_test):
     return metrics
 
 
-# ═══════════════════════════════════════════════════════════════
-#  MAIN FUNCTION — runs the full training pipeline
-# ═══════════════════════════════════════════════════════════════
+# Main pipeline execution
+
 
 def main():
     """
@@ -578,15 +548,15 @@ def main():
     """
 
     # Step 1: Load and clean
-    print("── Loading Dataset ──")
+    print("- Loading Dataset -")
     df = load_and_clean(DATA_FILE)
 
     # Step 2: Feature engineering
-    print("── Engineering Features ──")
+    print("- Engineering Features -")
     df = engineer_features(df)
 
     # Step 3: Select features
-    print("── Selecting Features ──")
+    print("- Selecting Features -")
     X, y, num_feats, bin_feats, cat_feats = select_features(df)
 
     # Step 4: Train/test split (80% train, 20% test)
@@ -603,7 +573,7 @@ def main():
     models = build_models(preprocessor)
 
     # Step 6: Cross-validation (5-fold)
-    print("── Cross-Validation (5-fold stratified) ──")
+    print("- Cross-Validation (5-fold stratified) -")
     cv_results = cross_validate_models(models, X_train, y_train)
 
     # Step 7: Select the best model (highest CV ROC-AUC)
@@ -620,7 +590,7 @@ def main():
     # Step 9: Evaluate on the holdout test set
     holdout_metrics = evaluate_holdout(best_pipeline, X_test, y_test)
 
-    print("── Holdout Results ──")
+    print("- Holdout Results -")
     print(holdout_metrics["classification_report"])
     print(f"  ROC-AUC : {holdout_metrics['roc_auc']:.3f}")
     print(f"  PR-AUC  : {holdout_metrics['pr_auc']:.3f}")
@@ -651,6 +621,6 @@ def main():
     print(f"✅  Features used (category): {cat_feats}")
 
 
-# ── Entry point: run the main function ───────────────────────
+# - Entry point: run the main function -
 if __name__ == "__main__":
     main()

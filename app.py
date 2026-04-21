@@ -1,35 +1,14 @@
 """
-VentureVerse – Flask Web Application
-======================================
-This is the main backend file that powers the entire VentureVerse website.
+VentureVerse - Main Backend
+This file handles the Flask web server, database operations, 
+ML model predictions, and PDF report generation.
 
-What this app does:
-  1. Lets users sign up, log in, and log out  (authentication)
-  2. Collects startup details via a form       (prediction input)
-  3. Feeds the data into an ML model           (XGBoost pipeline)
-  4. Shows a success probability + insights    (prediction output)
-  5. Generates charts and a downloadable PDF   (visualisation)
-  1. Lets users sign up, log in, and log out  (authentication)
-  2. Collects startup details via a form       (prediction input)
-  3. Feeds the data into an ML model           (XGBoost pipeline)
-  4. Shows a success probability + insights    (prediction output)
-  5. Generates charts and a downloadable PDF   (visualisation)
-
-Tech stack:
-  - Flask     → lightweight Python web framework
-  - SQLite    → simple file-based database (no server needed)
-  - joblib    → loads the pre-trained ML model from disk
-  - pandas    → builds the input dataframe for the model
-  - reportlab → generates PDF reports
-
-Author : Kashish Jadhav (w2035589)
-Module : 6COSC023W — BSc Computer Science Final Project
-Uni    : University of Westminster, 2025–2026
+Kashish Jadhav (w2035589)
+BSc Computer Science Final Project
+University of Westminster, 2025-2026
 """
 
-# ═══════════════════════════════════════════════════════════════
-#  IMPORTS — libraries we need to run the app
-# ═══════════════════════════════════════════════════════════════
+# Import libraries
 
 from flask import (
     Flask,              # The web framework itself
@@ -55,9 +34,7 @@ from email.mime.text import MIMEText
 import feedparser           # Scraping RSS feeds
 
 
-# ═══════════════════════════════════════════════════════════════
-#  APP SETUP — create the Flask app and configure it
-# ═══════════════════════════════════════════════════════════════
+# Flask app setup
 
 app = Flask(__name__)
 
@@ -71,32 +48,24 @@ DB_FILE = "ventureverse.db"             # SQLite database file
 MODEL_FILE = "ventureverse_model.joblib"  # Trained ML model
 RESULTS_FILE = "model_results_summary.json"  # Model comparison metrics
 
-# ── MAIL CONFIGURATION (Gmail) ────────────────────────────────
+# - MAIL CONFIGURATION (Gmail) -
 MAIL_EMAIL = "ventureverseltd@gmail.com"
 MAIL_PASSWORD = "ymad pvyb wrfy ejix"
 
-# ── NEWS CACHE ───────────────────────────────────────────────
+# Cache for news feed
 NEWS_CACHE = None
 LAST_FETCH_TIME = None
 CACHE_DURATION = timedelta(minutes=30)
 
-# ── ADMIN CREDENTIALS (Hardcoded) ─────────────────────────────
+# Admin login info
 ADMIN_EMAIL = "admin@ventureverse.com"
 ADMIN_PASSWORD = "admin123"
 
 
-# ═══════════════════════════════════════════════════════════════
-#  DATABASE SETUP — create the tables if they don't exist
-# ═══════════════════════════════════════════════════════════════
+# Database setup functions
 
 def init_db():
-    """
-    Creates two database tables (if they don't already exist):
-      1. 'users'       — stores registered accounts
-      2. 'predictions' — stores every prediction a user makes
-
-    This function runs once when the server starts.
-    """
+    """Initialize the database and creates tables if they are missing"""
     connection = sqlite3.connect(DB_FILE)
     cursor = connection.cursor()
 
@@ -144,9 +113,7 @@ def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
 
 
-# ═══════════════════════════════════════════════════════════════
-#  STARTUP — run when the server first starts
-# ═══════════════════════════════════════════════════════════════
+# Run when the server starts
 
 # Create the database tables (safe to call multiple times)
 init_db()
@@ -165,9 +132,7 @@ except Exception:
     model_results = None
 
 
-# ═══════════════════════════════════════════════════════════════
-#  LOOKUP MAPS — readable names for states and industries
-# ═══════════════════════════════════════════════════════════════
+# Mapping codes to readable names
 
 # The dataset uses short codes like "CA" and "biotech".
 # These dictionaries convert them into full, readable names
@@ -195,29 +160,12 @@ INDUSTRY_MAP = {
 CATEGORIES = list(INDUSTRY_MAP.keys())  # ["biotech", "consulting", ...]
 
 
-# ═══════════════════════════════════════════════════════════════
+# -
 #  HELPER FUNCTION: Build Input DataFrame
-# ═══════════════════════════════════════════════════════════════
+# -
 
 def build_input_df(form):
-    """
-    Takes the raw form data (strings from the HTML form) and
-    builds a pandas DataFrame that the ML model can understand.
-
-    This function also engineers three extra features:
-      - funding_duration       = last_funding - first_funding
-      - avg_funding_per_round  = total_funding / number_of_rounds
-      - log_funding            = log(1 + total_funding)
-
-    These match exactly what train_model.py creates during
-    training, so the model receives the same feature set.
-
-    Args:
-        form: dictionary of form field names → string values
-
-    Returns:
-        A single-row pandas DataFrame ready for model.predict_proba()
-    """
+    """Build a dataframe for the ML model from form input"""
 
     # --- Read numeric fields from the form ---
     funding_total = float(form.get("funding_total_usd", 0))
@@ -297,36 +245,13 @@ def build_input_df(form):
     return pd.DataFrame([input_row])
 
 
-# ═══════════════════════════════════════════════════════════════
-#  HELPER FUNCTION: Compute Risk Breakdown
-# ═══════════════════════════════════════════════════════════════
+# Calculate risk factors and status labels
 
 def compute_risk_breakdown(form):
-    """
-    Analyses 6 startup factors and assigns each a score (0–100)
-    and a status label (strong / moderate / weak).
-
-    These 6 factors are shown as coloured bars on the prediction
-    page and in the charts:
-      1. Total Funding
-      2. Funding Rounds
-      3. Investor Quality
-      4. Network Strength
-      5. Early Traction (milestones)
-      6. Location
-
-    The thresholds are based on patterns observed in the
-    Crunchbase training data.
-
-    Args:
-        form: dictionary of form field names → string values
-
-    Returns:
-        list of 6 dicts, each with keys: factor, score, status
-    """
+    """Analyse factors and assign scores/labels"""
     factors = []
 
-    # ── Factor 1: Total Funding ──────────────────────────────
+    # - Factor 1: Total Funding -
     funding = float(form.get("funding_total_usd", 0))
     if funding >= 10_000_000:  # $10M+
         factors.append({"factor": "Total Funding", "score": 90, "status": "strong"})
@@ -337,7 +262,7 @@ def compute_risk_breakdown(form):
     else:  # Under $500K
         factors.append({"factor": "Total Funding", "score": 15, "status": "weak"})
 
-    # ── Factor 2: Funding Rounds ─────────────────────────────
+    # - Factor 2: Funding Rounds -
     rounds = int(form.get("funding_rounds", 0))
     if rounds >= 4:
         factors.append({"factor": "Funding Rounds", "score": 85, "status": "strong"})
@@ -346,7 +271,7 @@ def compute_risk_breakdown(form):
     else:
         factors.append({"factor": "Funding Rounds", "score": 20, "status": "weak"})
 
-    # ── Factor 3: Investor Quality ───────────────────────────
+    # - Factor 3: Investor Quality -
     has_vc = int(form.get("has_VC", 0))
     is_top = int(form.get("is_top500", 0))
     has_angel = int(form.get("has_angel", 0))
@@ -360,7 +285,7 @@ def compute_risk_breakdown(form):
     else:  # No institutional backing
         factors.append({"factor": "Investor Quality", "score": 10, "status": "weak"})
 
-    # ── Factor 4: Network Strength ───────────────────────────
+    # - Factor 4: Network Strength -
     relationships = int(form.get("relationships", 0))
     if relationships >= 10:
         factors.append({"factor": "Network Strength", "score": 85, "status": "strong"})
@@ -369,7 +294,7 @@ def compute_risk_breakdown(form):
     else:
         factors.append({"factor": "Network Strength", "score": 20, "status": "weak"})
 
-    # ── Factor 5: Early Traction (milestones) ────────────────
+    # - Factor 5: Early Traction (milestones) -
     milestones = int(form.get("milestones", 0))
     if milestones >= 3:
         factors.append({"factor": "Early Traction", "score": 80, "status": "strong"})
@@ -378,7 +303,7 @@ def compute_risk_breakdown(form):
     else:
         factors.append({"factor": "Early Traction", "score": 10, "status": "weak"})
 
-    # ── Factor 6: Ecosystem ───────────────────────────────────
+    # - Factor 6: Ecosystem -
     ecosystem = form.get("ecosystem", "emerging")
     if ecosystem == "major_hub":
         factors.append({"factor": "Ecosystem", "score": 85, "status": "strong"})
@@ -390,34 +315,15 @@ def compute_risk_breakdown(form):
     return factors
 
 
-# ═══════════════════════════════════════════════════════════════
+# -
 #  HELPER FUNCTION: Generate Insight Cards
-# ═══════════════════════════════════════════════════════════════
+# -
 
 def generate_insights(form, prediction, pred_label, risk_factors):
-    """
-    Creates a list of insight cards based on the prediction result
-    and the startup's profile. Each card has:
-      - title  : short heading (e.g. "Strong Success Indicators")
-      - icon   : emoji HTML code
-      - type   : "positive", "negative", "neutral", or "action"
-      - text   : detailed explanation paragraph
-
-    These cards are displayed on the Insights page and included
-    in the downloadable PDF report.
-
-    Args:
-        form:         dictionary of form data
-        prediction:   success probability percentage (e.g. 75.3)
-        pred_label:   "Success" or "Failure"
-        risk_factors: list from compute_risk_breakdown()
-
-    Returns:
-        list of insight card dictionaries
-    """
+    """Generate insight cards based on prediction result"""
     insights = []
 
-    # ── Card 1: Overall assessment based on probability ──────
+    # - Card 1: Overall assessment based on probability -
     if prediction >= 75:
         insights.append({
             "title": "Strong Success Indicators",
@@ -452,7 +358,7 @@ def generate_insights(form, prediction, pred_label, risk_factors):
             ),
         })
 
-    # ── Card 2: Funding analysis ─────────────────────────────
+    # - Card 2: Funding analysis -
     funding = float(form.get("funding_total_usd", 0))
     rounds = int(form.get("funding_rounds", 0))
 
@@ -490,7 +396,7 @@ def generate_insights(form, prediction, pred_label, risk_factors):
             ),
         })
 
-    # ── Card 3: Investor backing ─────────────────────────────
+    # - Card 3: Investor backing -
     has_vc = int(form.get("has_VC", 0))
     is_top = int(form.get("is_top500", 0))
     has_angel = int(form.get("has_angel", 0))
@@ -527,7 +433,7 @@ def generate_insights(form, prediction, pred_label, risk_factors):
             ),
         })
 
-    # ── Card 4: Network / relationships ──────────────────────
+    # - Card 4: Network / relationships -
     relationships = int(form.get("relationships", 0))
     if relationships >= 8:
         insights.append({
@@ -551,7 +457,7 @@ def generate_insights(form, prediction, pred_label, risk_factors):
             ),
         })
 
-    # ── Card 5: Milestones ───────────────────────────────────
+    # - Card 5: Milestones -
     milestones = int(form.get("milestones", 0))
     if milestones == 0:
         insights.append({
@@ -574,7 +480,7 @@ def generate_insights(form, prediction, pred_label, risk_factors):
             ),
         })
 
-    # ── Card 6: Ecosystem advantage ───────────────────────────
+    # - Card 6: Ecosystem advantage -
     ecosystem = form.get("ecosystem", "emerging")
 
     if ecosystem == "major_hub":
@@ -598,7 +504,8 @@ def generate_insights(form, prediction, pred_label, risk_factors):
             ),
         })
 
-    # ── Card 7: Recommendations (based on weak factors) ──────
+    # Card 7: Recommendations
+
     weak_factors = [rf for rf in risk_factors if rf["status"] == "weak"]
     if weak_factors:
         weak_names = ", ".join([w["factor"] for w in weak_factors])
@@ -616,20 +523,11 @@ def generate_insights(form, prediction, pred_label, risk_factors):
     return insights
 
 
-# ═══════════════════════════════════════════════════════════════
-#  HELPER FUNCTION: Get Model Comparison Data
-# ═══════════════════════════════════════════════════════════════
+# Get data for model comparison charts
+
 
 def get_model_comparison():
-    """
-    Reads the model_results_summary.json file and extracts
-    the performance metrics for all three ML models
-    (Logistic Regression, Random Forest, XGBoost).
-
-    Returns a dict with lists of names, ROC-AUC scores,
-    accuracies, and F1 scores — used by the Charts page.
-    Returns None if no results file is available.
-    """
+    """Get metrics for all ML models from the summary file"""
     if not model_results or "all_model_results" not in model_results:
         return None
 
@@ -653,21 +551,11 @@ def get_model_comparison():
     }
 
 
-# ═══════════════════════════════════════════════════════════════
-#  HELPER FUNCTION: Get Prediction History
-# ═══════════════════════════════════════════════════════════════
+# Fetch recent predictions for a user
+
 
 def get_prediction_history(user_id):
-    """
-    Fetches the last 10 predictions made by a specific user
-    from the database, ordered newest-first.
-
-    Returns a list of dicts, each containing:
-      - score : prediction percentage
-      - label : "Success" or "Failure"
-      - data  : the original form data (as a dict)
-      - date  : formatted date string (e.g. "19 Apr 2026, 03:15 PM")
-    """
+    """Get the last 10 predictions from the database"""
     try:
         connection = sqlite3.connect(DB_FILE)
         cursor = connection.cursor()
@@ -706,9 +594,8 @@ def get_prediction_history(user_id):
         return []
 
 
-# ═══════════════════════════════════════════════════════════════
-#  HELPER FUNCTION: Send Welcome Email
-# ═══════════════════════════════════════════════════════════════
+# Send welcome email to new users
+
 
 def send_welcome_email(to_email, user_name):
     """
@@ -742,37 +629,18 @@ def send_welcome_email(to_email, user_name):
         pass  # Skip silently for the user, but log for the developer
 
 
-# ═══════════════════════════════════════════════════════════════
-#  ROUTES: Authentication (Login, Signup, Logout)
-# ═══════════════════════════════════════════════════════════════
+# Authentication routes (Login, Signup, Logout)
+
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
-    """
-    GET  → shows the login form
-    POST → checks email + password against the database
-
-    If credentials are correct:
-      - stores user info in the session (like a browser cookie)
-      - redirects to the home/predict page
-
-    If credentials are wrong:
-      - re-renders the login page with an error message
-    """
+    """Handle user login"""
     if request.method == "POST":
         email = request.form.get("email", "").strip()
         password = request.form.get("password", "")
 
-        # --- CASE 1: Check Admin Credentials ---
-        if email == ADMIN_EMAIL and password == ADMIN_PASSWORD:
-            session.clear()  # Clear any existing session
-            session["user_id"] = "admin"
-            session["user_name"] = "Administrator"
-            session["user_email"] = email
-            session["is_admin"] = True
-            return redirect(url_for("admin"))
+        # Check database for user
 
-        # --- CASE 2: Check standard user in Database ---
         connection = sqlite3.connect(DB_FILE)
         cursor = connection.cursor()
         cursor.execute(
@@ -800,16 +668,7 @@ def login():
 
 @app.route("/signup", methods=["GET", "POST"])
 def signup():
-    """
-    GET  → shows the signup form
-    POST → creates a new user account in the database
-
-    Validates:
-      - All fields are filled in
-      - Passwords match
-      - Password is at least 6 characters
-      - Email is not already registered
-    """
+    """Handle user registration"""
     if request.method == "POST":
         name = request.form.get("full_name", "").strip()
         email = request.form.get("email", "").strip()
@@ -866,29 +725,17 @@ def signup():
 
 @app.route("/logout")
 def logout():
-    """
-    Clears the session (removes login info) and redirects
-    the user back to the home page.
-    """
+    """Clear session and log out"""
     session.clear()
     return redirect(url_for("home"))
 
 
-# ═══════════════════════════════════════════════════════════════
-#  ROUTES: Landing Page and Prediction
-# ═══════════════════════════════════════════════════════════════
+# Main site routes
+
 
 @app.route("/")
 def home():
-    """
-    The main page of the website.
-
-    If the user is NOT logged in → show the landing page
-    If the user IS logged in     → show the prediction form
-
-    Also passes any previous prediction results stored in
-    the session, so users can see their last result.
-    """
+    """Show landing page or prediction form"""
     if "user_id" not in session:
         return render_template("landing.html")
 
@@ -910,10 +757,7 @@ def home():
 
 @app.route("/reset")
 def reset():
-    """
-    Clears the last prediction from the session so the user
-    gets a fresh, empty form when they return to the home page.
-    """
+    """Clear previous prediction from session"""
     session.pop("last_prediction", None)
     session.pop("last_pred_label", None)
     session.pop("last_form_data", None)
@@ -923,20 +767,7 @@ def reset():
 
 @app.route("/predict", methods=["POST"])
 def predict():
-    """
-    The core route — takes form data, runs the ML model, and
-    returns the prediction result.
-
-    Steps:
-      1. Check the user is logged in
-      2. Read all form fields
-      3. Validate that required fields are filled
-      4. Build a DataFrame and feed it to the model
-      5. Get the success probability
-      6. Compute risk factor breakdown
-      7. Save the prediction to the database
-      8. Display the result on the page
-    """
+    """Handle prediction form submission"""
     # Step 1: Must be logged in to predict
     if "user_id" not in session:
         return redirect(url_for("login"))
@@ -1046,9 +877,8 @@ def predict():
         )
 
 
-# ═══════════════════════════════════════════════════════════════
-#  ROUTES: Charts Page
-# ═══════════════════════════════════════════════════════════════
+# Charts page route
+
 
 @app.route("/charts")
 def charts():
@@ -1073,9 +903,8 @@ def charts():
     )
 
 
-# ═══════════════════════════════════════════════════════════════
-#  ROUTES: Insights Page
-# ═══════════════════════════════════════════════════════════════
+# Insights page route
+
 
 @app.route("/insights")
 def insights():
@@ -1113,9 +942,9 @@ def insights():
     )
 
 
-# ═══════════════════════════════════════════════════════════════
+# -
 #  ROUTES: Download PDF Report
-# ═══════════════════════════════════════════════════════════════
+# -
 
 @app.route("/download-insights")
 def download_insights():
@@ -1142,7 +971,7 @@ def download_insights():
     cards = generate_insights(form_data, prediction, pred_label, risk_factors)
 
     try:
-        # ── Try to create a proper PDF using ReportLab ───────
+        # - Try to create a proper PDF using ReportLab -
         from reportlab.lib.pagesizes import A4
         from reportlab.lib import colors
         from reportlab.platypus import (
@@ -1240,7 +1069,7 @@ def download_insights():
         return send_file(filepath, as_attachment=True, download_name="VentureVerse_Insights.pdf")
 
     except ImportError:
-        # ── Fallback: plain text file if ReportLab not installed ──
+        # - Fallback: plain text file if ReportLab not installed -
         filepath = f"/tmp/ventureverse_insights_{session['user_id']}.txt"
         with open(filepath, "w") as file:
             file.write(f"VentureVerse Insights Report\n")
@@ -1251,9 +1080,8 @@ def download_insights():
         return send_file(filepath, as_attachment=True, download_name="VentureVerse_Insights.txt")
 
 
-# ═══════════════════════════════════════════════════════════════
-#  ROUTES: About Page
-# ═══════════════════════════════════════════════════════════════
+# About page
+
 
 @app.route("/about")
 def about():
@@ -1265,16 +1093,12 @@ def about():
     )
 
 
-# ═══════════════════════════════════════════════════════════════
-#  ROUTES: News Feed (RSS Scraper)
-# ═══════════════════════════════════════════════════════════════
+# Startup news feed (RSS)
+
 
 @app.route("/news")
 def news():
-    """
-    Fetches startup news from TechCrunch and Forbes RSS feeds.
-    Caches the results for 30 minutes.
-    """
+    """Fetch startup news from TechCrunch and Forbes"""
     global NEWS_CACHE, LAST_FETCH_TIME
 
     now = datetime.now()
@@ -1317,22 +1141,15 @@ def news():
     )
 
 
-# ═══════════════════════════════════════════════════════════════
-# ═══════════════════════════════════════════════════════════════
-#  END OF FILE
-# ═══════════════════════════════════════════════════════════════
 
 
-# ═══════════════════════════════════════════════════════════════
-#  ROUTES: Admin Dashboard
-# ═══════════════════════════════════════════════════════════════
+
+# Admin Dashboard routes
+
 
 @app.route("/admin")
 def admin():
-    """
-    Shows high-level system statistics for administrators.
-    Requires session['is_admin'] to be True.
-    """
+    """Show system stats for admins"""
     if not session.get("is_admin"):
         return redirect(url_for("login"))
 
@@ -1478,9 +1295,8 @@ def delete_user(user_id):
         return str(e), 500
 
 
-# ═══════════════════════════════════════════════════════════════
-#  START THE SERVER
-# ═══════════════════════════════════════════════════════════════
+# Start the Flask server
+
 
 if __name__ == "__main__":
     # debug=True enables auto-reload when you save changes

@@ -1,23 +1,4 @@
-<!--
-  charts.html — VentureVerse Visual Analytics Page
-  ==================================================
-  Displays interactive charts using Chart.js library:
-    1. Prediction Drivers   — Polar Area chart (coloured segments)
-    2. Factor Radar Profile — Radar chart (your startup vs ideal)
-    3. Prediction Gauge     — SVG circle gauge
-    4. Factor Strength Bars — Horizontal progress bars
-
-  If no prediction has been made yet, shows a "No Prediction Yet"
-  message with a link back to the Predict page.
-
-  Jinja variables:
-    - prediction       : success percentage or None
-    - pred_label       : "Success" or "At Risk" or None
-    - risk_factors     : list of 6 factor dicts
-    - model_comparison : dict with model names and metrics
-    - user_name        : logged-in user's name
-    - active_page      : "charts"
--->
+<!-- Template Page -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -37,23 +18,23 @@
 
   <main class="container">
 
-    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- - -->
     <!--  PAGE HEADER                                            -->
-    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- - -->
     <div class="page-header">
       <h1 class="animate-in">Visual Analytics</h1>
       <p class="animate-in delay-1">Hover over charts for detailed breakdowns and data points.</p>
     </div>
 
     {% if prediction is not none %}
-    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- - -->
     <!--  CHARTS GRID (shown after a prediction)                 -->
     <!--  2x2 grid of chart cards                                -->
-    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- - -->
     <div class="dashboard-grid">
 
-      <!-- ── Chart 1: Prediction Drivers (Polar Area) ──────── -->
-      <!-- Shows each factor as a coloured segment sized by score -->
+      <!-- Chart 1: Drivers -->
+
       <div class="card animate-in delay-1">
         <div class="chart-title" style="font-size:18px; color:var(--slate-900);">Prediction Drivers</div>
         <div class="chart-desc" style="font-size:14px; color:var(--blue-600); font-weight:600;">Relative impact and strength of core prediction factors</div>
@@ -62,8 +43,8 @@
         </div>
       </div>
 
-      <!-- ── Chart 2: Radar Profile ────────────────────────── -->
-      <!-- Spider/radar chart comparing your startup to an ideal benchmark -->
+      <!-- Chart 2: Radar Profile -->
+
       <div class="card animate-in delay-2">
         <div class="chart-title" style="font-size:18px; color:var(--slate-900);">Factor Radar Profile</div>
         <div class="chart-desc" style="font-size:14px; color:var(--blue-600); font-weight:600;">Your startup factors vs ideal benchmark</div>
@@ -72,8 +53,8 @@
         </div>
       </div>
 
-      <!-- ── Chart 3: Success vs Risk Probability (Doughnut) ─── -->
-      <!-- Interactive doughnut chart comparing success vs risk -->
+      <!-- Chart 3: Doughnut Chart -->
+
       <div class="card animate-in delay-3">
         <div class="chart-title" style="font-size:18px; color:var(--slate-900);">Probability Breakdown</div>
         <div class="chart-desc" style="font-size:14px; color:var(--blue-600); font-weight:600;">Success vs Risk Probability</div>
@@ -82,8 +63,8 @@
         </div>
       </div>
 
-      <!-- ── Chart 4: Factor Strength Bars ─────────────────── -->
-      <!-- Horizontal bars with green/amber/red colouring -->
+      <!-- Chart 4: Strength Bars -->
+
       {% if risk_factors %}
       <div class="card animate-in delay-4">
         <div class="chart-title" style="font-size:18px; color:var(--slate-900);">Factor Strength Bars</div>
@@ -121,9 +102,9 @@
     </div>
 
     {% else %}
-    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- - -->
     <!--  NO PREDICTION YET — prompt user to run one first       -->
-    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- - -->
     <div class="card animate-in delay-2" style="text-align:center; padding:60px;">
       <div style="font-size:48px; margin-bottom:16px;">&#128202;</div>
       <h2 style="margin:0 0 8px;">No Prediction Yet</h2>
@@ -137,11 +118,11 @@
 
   </main>
 
-  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- - -->
   <!--  CHART.JS SCRIPTS                                       -->
   <!--  These JavaScript blocks create the interactive charts  -->
   <!--  using data passed from the Flask backend via Jinja     -->
-  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- - -->
   {% if prediction is not none %}
   <!-- Data for charts passed from Flask via JSON -->
   <div id="chart-data" 
@@ -150,28 +131,28 @@
        data-model-comparison='{{ model_comparison|tojson if model_comparison else "null" }}'
        style="display:none;"></div>
 
-  {% if prediction is not none %}
+
   <script>
     (function() {
-      // ── Parse data from the hidden element ────────────────
+      // - Parse data from the hidden element -
       const dataEl = document.getElementById('chart-data');
       const prediction = JSON.parse(dataEl.dataset.prediction);
       const riskFactors = JSON.parse(dataEl.dataset.riskFactors);
       const modelComparison = JSON.parse(dataEl.dataset.modelComparison);
 
-      // ── Set factor bar widths (Fixes IDE CSS errors) ──────
+      // - Set factor bar widths (Fixes IDE CSS errors) -
       document.querySelectorAll('.risk-bar-fill').forEach(bar => {
         const score = bar.getAttribute('data-score');
         if (score) bar.style.width = score + '%';
       });
 
-      // ── Global Chart.js defaults ──────────────────────────
+      // - Global Chart.js defaults -
       Chart.defaults.color = '#64748b';
       Chart.defaults.borderColor = '#e2e8f0';
       Chart.defaults.font.family = "'Inter', sans-serif";
       Chart.defaults.font.size = 13;
 
-      // ── Chart 1: Polar Area (Prediction Drivers) ──────────
+      // - Chart 1: Polar Area (Prediction Drivers) -
       if (riskFactors && riskFactors.length > 0) {
         new Chart(document.getElementById('probChart'), {
           type: 'polarArea',
@@ -226,7 +207,7 @@
         });
       }
 
-      // ── Chart 2: Radar (Factor Profile vs Ideal) ──────────
+      // - Chart 2: Radar (Factor Profile vs Ideal) -
       if (riskFactors && riskFactors.length > 0) {
         new Chart(document.getElementById('radarChart'), {
           type: 'radar',
@@ -285,7 +266,7 @@
         });
       }
 
-      // ── Chart 3: Doughnut (Success vs Risk) ───────────────
+      // - Chart 3: Doughnut (Success vs Risk) -
       new Chart(document.getElementById('doughnutChart'), {
         type: 'doughnut',
         data: {
