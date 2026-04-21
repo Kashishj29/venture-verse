@@ -157,32 +157,28 @@ def engineer_features(df):
         if col in df.columns:
             df[col] = pd.to_numeric(df[col], errors="coerce")
 
-    # - New Feature: Funding Duration -
-    # How many years passed between first and last funding round.
-    # A longer duration can indicate sustained investor interest.
+    # Funding Duration -years passed between first- last funding round.
+    # A longer duration means interest.
     if "age_first_funding_year" in df.columns and "age_last_funding_year" in df.columns:
         df["funding_duration"] = (
             df["age_last_funding_year"] - df["age_first_funding_year"]
         ).clip(lower=0)  # clip(lower=0) means: no negative values
 
-    # - New Feature: Average Funding Per Round -
-    # Total funding divided by number of rounds.
-    # Higher values mean bigger rounds (more investor confidence).
+    # Average Funding Per Round - Total funding/number of rounds.
+    # Higher values mean more investor interested.
     if "funding_total_usd" in df.columns and "funding_rounds" in df.columns:
         safe_rounds = df["funding_rounds"].replace(0, 1)  # Avoid dividing by zero
         df["avg_funding_per_round"] = df["funding_total_usd"] / safe_rounds
 
-    # - New Feature: Log-Transformed Funding -
-    # Funding ranges from $0 to $1 billion+. That huge range
+    # Log-Transformed Funding - Funding ranges from $0 to $1 billion+. That huge range
     # makes it hard for models to learn. Log-transform compresses
     # it: log(1 + 10000) ≈ 9.2, log(1 + 100000000) ≈ 18.4
     if "funding_total_usd" in df.columns:
         df["log_funding"] = np.log1p(df["funding_total_usd"].fillna(0))
 
-    # - Consolidate Industry Categories -
-    # Keep the 12 most common industries; group the rest as "other".
-    # This prevents the model from overfitting to rare categories
-    # with only a handful of examples.
+    
+    # Industry consolidate- Keep the 12 most common industries; group rest as "other".
+    # to prevents the model from overfitting to rare categories with only a handful of examples.
     if "category_code" in df.columns:
         df["category_code"] = df["category_code"].fillna("other").astype(str)
         top_categories = df["category_code"].value_counts().nlargest(12).index
@@ -190,7 +186,7 @@ def engineer_features(df):
             df["category_code"].isin(top_categories), "other"
         )
 
-    # - Consolidate State Codes -
+
     # Keep top 8 states; group the rest as "other"
     if "state_code" in df.columns:
         df["state_code"] = df["state_code"].fillna("other").astype(str)

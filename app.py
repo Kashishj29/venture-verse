@@ -48,7 +48,7 @@ DB_FILE = "ventureverse.db"             # SQLite database file
 MODEL_FILE = "ventureverse_model.joblib"  # Trained ML model
 RESULTS_FILE = "model_results_summary.json"  # Model comparison metrics
 
-# - MAIL CONFIGURATION (Gmail) -
+# for MAIL CONFIGURATION (Gmail) -
 MAIL_EMAIL = "ventureverseltd@gmail.com"
 MAIL_PASSWORD = "ymad pvyb wrfy ejix"
 
@@ -123,7 +123,7 @@ init_db()
 # pipeline that includes preprocessing + classification.
 model = joblib.load(MODEL_FILE)
 
-# Load the model comparison results (accuracy, ROC-AUC, etc.)
+# Loading the model comparison results (accuracy, ROC-AUC, etc.)
 # for displaying on the Charts page.
 try:
     with open(RESULTS_FILE) as file:
@@ -203,8 +203,8 @@ def build_input_df(form):
     }
     state = ecosystem_to_state.get(ecosystem, 'other')
 
-    # --- Engineer derived features (must match train_model.py) ---
-    # How long between first and last funding round (in years)
+    # Engineer derived features (must match train_model.py) 
+    # first- last funding round (in years)
     funding_duration = max(age_last_funding - age_first_funding, 0)
 
     # Avoid dividing by zero if funding_rounds is 0
@@ -217,7 +217,7 @@ def build_input_df(form):
     # (e.g. $10K vs $100M) into a smaller, more manageable scale.
     log_funding = np.log1p(funding_total)
 
-    # --- Build a single-row DataFrame with all features ---
+    # Build a single-row DataFrame with all features 
     input_row = {
         "age_first_funding_year": age_first_funding,
         "age_last_funding_year": age_last_funding,
