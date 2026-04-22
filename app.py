@@ -11,30 +11,30 @@ University of Westminster, 2025-2026
 # Import libraries
 
 from flask import (
-    Flask,              # The web framework itself
+    Flask,              # web framework 
     render_template,    # Renders HTML pages with dynamic data
     request,            # Reads data from forms and URLs
-    redirect,           # Sends the user to a different page
-    url_for,            # Generates URLs for Flask routes
-    session,            # Stores per-user data (like "logged in")
+    redirect,          
+    url_for,            # Generates urls for Flask routes
+    session,            # Stores per-user data 
     send_file,          # Sends files (e.g. PDF) to the browser
 )
 
-import joblib           # Loads the saved ML model (.joblib file)
-import json             # Reads/writes JSON data
+import joblib           # to load the saved ML model (.joblib file)
+import json             # to read/write JSON data
 import numpy as np      # Maths library (e.g. log transform)
-import pandas as pd     # Creates dataframes for the ML model
+import pandas as pd     # to create dataframes for the ML model
 import sqlite3          # Built-in Python database
-import hashlib          # Hashes passwords (SHA-256)
-import os               # Reads environment variables, file paths
-from datetime import datetime, timedelta  # Timestamps for PDF and history
-import re                   # Regex for password validation
-import smtplib              # Sending emails
+import hashlib          # to hash passwords (SHA-256)
+import os               # to Read environment variables, file paths
+from datetime import datetime, timedelta  # for time values for PDF and history
+import re                   # for Regex for password validation
+import smtplib              # to send emails
 from email.mime.text import MIMEText
 import feedparser           # Scraping RSS feeds
 
 
-# Flask app setup
+# foe Flask app setup
 
 app = Flask(__name__)
 
@@ -113,9 +113,7 @@ def hash_password(password):
 # Create the database tables (safe to call multiple times)
 init_db()
 
-# Load the trained ML model from disk so we can make predictions.
-# This model was created by train_model.py — it's an XGBoost
-# pipeline that includes preprocessing + classification.
+# to load the trained ML model from disk so we can make predictions.
 model = joblib.load(MODEL_FILE)
 
 # Loading the model comparison results (accuracy, ROC-AUC, etc.)
@@ -126,12 +124,7 @@ try:
 except Exception:
     model_results = None
 
-
-# Mapping codes to readable names
-
-# The dataset uses short codes like "CA" and "biotech".
-# These dictionaries convert them into full, readable names
-# for display on the website.
+# to convert dataset short codes like "CA" and "biotech" into full, readable names
 
 ECOSYSTEMMAP = {
     'major_hub': '🌍 Major Hub (Silicon Valley / London / NYC / Berlin)',
@@ -155,9 +148,7 @@ INDUSTRY_MAP = {
 CATEGORIES = list(INDUSTRY_MAP.keys())  # ["biotech", "consulting", ...]
 
 
-# -
-#  HELPER FUNCTION: Build Input DataFrame
-# -
+# to build a dataframe for the ML model from form input
 
 def build_input_df(form):
     """Build a dataframe for the ML model from form input"""
@@ -172,12 +163,11 @@ def build_input_df(form):
     age_first_funding = float(form.get("age_first_funding_year", 0))
     age_last_funding = float(form.get("age_last_funding_year", 0))
 
-    # Milestone ages can be 0 if the startup has none yet.
-    # We treat 0 as "missing" (NaN) so the model handles it properly.
+    # treat 0 as "missing" (NaN) so the model handles it properly.
     age_first_milestone = float(form.get("age_first_milestone_year", 0)) or np.nan
     age_last_milestone = float(form.get("age_last_milestone_year", 0)) or np.nan
 
-    # --- Read binary (yes/no) checkboxes ---
+    # to Read binary (yes/no) checkboxes
     has_vc = int(form.get("has_VC", 0))
     has_angel = int(form.get("has_angel", 0))
     has_round_a = int(form.get("has_roundA", 0))
@@ -186,7 +176,7 @@ def build_input_df(form):
     has_round_d = int(form.get("has_roundD", 0))
     is_top_500 = int(form.get("is_top500", 0))
 
-    # --- Read category fields ---
+  
     category = form.get("category_code", "other")
     ecosystem = form.get("ecosystem", "other")
 
@@ -310,15 +300,13 @@ def compute_risk_breakdown(form):
     return factors
 
 
-# -
-#  HELPER FUNCTION: Generate Insight Cards
-# -
+# Generate Insight Cards
 
 def generate_insights(form, prediction, pred_label, risk_factors):
     """Generate insight cards based on prediction result"""
     insights = []
 
-    # - Card 1: Overall assessment based on probability -
+    # Card 1: Overal assessment based on probabilit
     if prediction >= 75:
         insights.append({
             "title": "Strong Success Indicators",
@@ -353,7 +341,7 @@ def generate_insights(form, prediction, pred_label, risk_factors):
             ),
         })
 
-    # - Card 2: Funding analysis -
+    # Card 2: Funding analysis
     funding = float(form.get("funding_total_usd", 0))
     rounds = int(form.get("funding_rounds", 0))
 
@@ -391,7 +379,7 @@ def generate_insights(form, prediction, pred_label, risk_factors):
             ),
         })
 
-    # - Card 3: Investor backing -
+    #Card 3: Investor backing
     has_vc = int(form.get("has_VC", 0))
     is_top = int(form.get("is_top500", 0))
     has_angel = int(form.get("has_angel", 0))
@@ -428,7 +416,7 @@ def generate_insights(form, prediction, pred_label, risk_factors):
             ),
         })
 
-    # - Card 4: Network / relationships -
+    # Card 4: Network / relationships
     relationships = int(form.get("relationships", 0))
     if relationships >= 8:
         insights.append({
@@ -452,7 +440,7 @@ def generate_insights(form, prediction, pred_label, risk_factors):
             ),
         })
 
-    # - Card 5: Milestones -
+    #Card 5: Milestones
     milestones = int(form.get("milestones", 0))
     if milestones == 0:
         insights.append({
@@ -520,7 +508,6 @@ def generate_insights(form, prediction, pred_label, risk_factors):
 
 # Get data for model comparison charts
 
-
 def get_model_comparison():
     """Get metrics for all ML models from the summary file"""
     if not model_results or "all_model_results" not in model_results:
@@ -547,7 +534,6 @@ def get_model_comparison():
 
 
 # Fetch recent predictions for a user
-
 
 def get_prediction_history(user_id):
     """Get the last 10 predictions from the database"""
@@ -590,7 +576,6 @@ def get_prediction_history(user_id):
 
 
 # Send welcome email to new users
-
 
 def send_welcome_email(to_email, user_name):
     """
@@ -861,7 +846,7 @@ def predict():
         )
 
     except Exception as error:
-        # If anything goes wrong, show the error on the page
+        # If anyting goes wrong, show the error on the page
         form_data = {key: request.form.get(key, "") for key in request.form}
         return render_template(
             "index.html",
@@ -969,11 +954,11 @@ def download_insights():
     if not prediction:
         return redirect(url_for("insights"))
 
-    # Generate the insight cards to include in the PDF
+    # Generate the insight cards to inclde in the PDF
     cards = generate_insights(form_data, prediction, pred_label, risk_factors)
 
     try:
-        # - Try to create a proper PDF using ReportLab -
+        # Try to create a proper PDF using ReportLab
         from reportlab.lib.pagesizes import A4
         from reportlab.lib import colors
         from reportlab.platypus import (
@@ -1302,6 +1287,5 @@ def delete_user(user_id):
 
 if __name__ == "__main__":
     # debug=True enables auto-reload when you save changes
-    # and shows detailed error pages in the browser.
-    # IMPORTANT: Set debug=False in production!
+    # and shows detailed error pages in the browser and to IMPORTANT: Set debug=False in production!
     app.run(debug=True)

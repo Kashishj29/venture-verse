@@ -26,19 +26,18 @@ sys.stdout.reconfigure(encoding='utf-8')
 
 # These are ANSI escape codes that colour text in the terminal.
 # They only work in terminals that support colours (most do).
-GREEN = "\033[92m"    # Green text (for PASS)
-RED = "\033[91m"      # Red text (for FAIL)
-YELLOW = "\033[93m"   # Yellow text (for notes)
-CYAN = "\033[96m"     # Cyan text (for headings)
-BOLD = "\033[1m"      # Bold text
+GREEN = "\033[92m"    # green  (for PASS)
+RED = "\033[91m"      # red  (for FAIL)
+YELLOW = "\033[93m"   # yellow (for notes)
+CYAN = "\033[96m"     # cyan (for headings)
+BOLD = "\033[1m"      # bold 
 RESET = "\033[0m"     # Reset to normal text
 
 
 # Test Result Tracking
 
 
-# This list stores every test result as a tuple:
-# (test_id, test_name, "PASS" or "FAIL", optional_note)
+# This list stores every test result as a tuple: (test_id, test_name, "PASS" or "FAIL", optional_note)
 results = []
 
 
@@ -69,11 +68,10 @@ def record(test_id, test_name, passed, note=""):
 # Preparation
 
 #
-#  We do two things here:
+#  i did two things here:
 #    1. Create a temporary throw-away database (not the real one!)
 #    2. Create minimal stub HTML templates so Flask routes work
-#       without needing the full CSS/JS frontend
-#
+#    without needing the full CSS/JS frontend
 
 # Create a temporary database file (deleted after tests finish)
 TEST_DB = tempfile.mktemp(suffix=".db")

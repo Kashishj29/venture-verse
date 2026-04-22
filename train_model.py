@@ -14,10 +14,10 @@ import json
 import warnings
 import sys
 
-# Fix for Windows terminals that can't display emoji characters
+#fix for windows terminals that can't display emoji characters
 sys.stdout.reconfigure(encoding='utf-8')
 
-import numpy as np       # Numerical operations (e.g. log, mean)
+import numpy as np       # Numerial operations (e.g. log, mean)
 import pandas as pd      # Data manipulation (DataFrames)
 import joblib            # Save/load the trained model to disk
 
@@ -37,25 +37,24 @@ from sklearn.impute import SimpleImputer         # Fill in missing values
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import (
-    accuracy_score,              # % of correct predictions
-    balanced_accuracy_score,     # Accuracy adjusted for class imbalance
-    precision_score,             # Of all predicted "success", how many were correct?
-    recall_score,                # Of all actual "success", how many did we find?
-    f1_score,                    # Harmonic mean of precision and recall
-    roc_auc_score,               # Area under ROC curve (overall ranking quality)
-    average_precision_score,     # Area under Precision-Recall curve
-    classification_report,       # Full text report of all metrics
+    accuracy_score,              #% of correct predictions
+    balanced_accuracy_score,     # accuracy adjusted for class imbalance
+    precision_score,             # of all predicted "success", how many were correct?
+    recall_score,                # of all actual "success", how many did we find?
+    f1_score,                    # harmonic mean of precision and recall
+    roc_auc_score,               # area under ROC curve (overall ranking quality)
+    average_precision_score,     # area under precision-recall curve
+    classification_report,       # full text report of all metrics
     confusion_matrix,            # 2x2 matrix: TP, FP, TN, FN
 )
 
-# XGBoost: gradient-boosted decision trees (state-of-the-art)
+# xgboost: 
 from xgboost import XGBClassifier
 
-# Suppress sklearn warnings for cleaner output
+# suppress sklearn warnings for cleaner output
 warnings.filterwarnings("ignore")
 
-
-# Configuration
+#configuration
 
 
 DATA_FILE = "startup_data.csv"                 # Input dataset
@@ -95,7 +94,7 @@ def load_and_clean(path):
 
     # - Create the target column -
     # The dataset has a "status" column with values like
-    # "acquired", "closed", "operating". We only want the first two.
+    # "acquired", "closed", "operating". i only want the first two.
     if "status" not in df.columns:
         # Some versions of the dataset use a "labels" column instead
         if "labels" in df.columns:
@@ -227,13 +226,13 @@ def select_features(df):
 
     # - Define the three groups of features -
     numeric_features = [
-        "age_first_funding_year",     # Years from founding to first funding
-        "age_last_funding_year",      # Years from founding to latest funding
-        "age_first_milestone_year",   # Years from founding to first milestone
-        "age_last_milestone_year",    # Years from founding to latest milestone
-        "relationships",              # Number of key connections (advisors, etc.)
-        "funding_rounds",             # How many funding rounds completed
-        "funding_total_usd",          # Total money raised in USD
+        "age_first_funding_year",     
+        "age_last_funding_year",      
+        "age_first_milestone_year",   
+        "age_last_milestone_year",    
+        "relationships",              
+        "funding_rounds",             
+        "funding_total_usd",          
         "milestones",                 # Number of milestones achieved
         "avg_participants",           # Average investors per round
         "funding_duration",           # Time span of funding (engineered)
@@ -245,9 +244,9 @@ def select_features(df):
         "has_VC",       # Has venture capital backing? (1 = yes, 0 = no)
         "has_angel",    # Has angel investor? (1 = yes, 0 = no)
         "has_roundA",   # Completed Series A round?
-        "has_roundB",   # Completed Series B round?
-        "has_roundC",   # Completed Series C round?
-        "has_roundD",   # Completed Series D round?
+        "has_roundB",  
+        "has_roundC",   
+        "has_roundD", 
         "is_top500",    # Backed by a Top-500 VC firm?
     ]
 
@@ -282,7 +281,6 @@ def select_features(df):
 
 
 # Step 4: Preprocessing
-
 
 def build_preprocessor(numeric_features, binary_features, categorical_features):
     """
