@@ -1,6 +1,7 @@
 <!-- landing.html - Public landing page explaining the project -->
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -8,6 +9,7 @@
   <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}?v=3">
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
+
 <body class="landing-page">
 
   <!-- Navigation bar for landing page -->
@@ -138,7 +140,8 @@
     <!-- Features Section -->
     <section class="features-section container" id="features">
       <h2 class="animate-in">Everything you need to<br>evaluate startup potential</h2>
-      <p class="section-sub animate-in delay-1">From high-accuracy predictions to detailed factor insights — all in one platform.</p>
+      <p class="section-sub animate-in delay-1">From high-accuracy predictions to detailed factor insights — all in one
+        platform.</p>
 
       <div class="features-grid">
 
@@ -146,14 +149,16 @@
         <div class="feature-card animate-in delay-2">
           <div class="feature-icon blue">&#128202;</div>
           <h3>ML-Powered Predictions</h3>
-          <p>Three models (Logistic Regression, Random Forest, XGBoost) compete to give you the most accurate success probability.</p>
+          <p>Three models (Logistic Regression, Random Forest, XGBoost) compete to give you the most accurate success
+            probability.</p>
         </div>
 
         <!-- Feature 2: Actionable Insights -->
         <div class="feature-card animate-in delay-3">
           <div class="feature-icon green">&#128161;</div>
           <h3>Actionable Insights</h3>
-          <p>Get specific recommendations on what to improve — funding, network, traction — with colour-coded strength analysis.</p>
+          <p>Get specific recommendations on what to improve — funding, network, traction — with colour-coded strength
+            analysis.</p>
         </div>
 
 
@@ -163,7 +168,8 @@
 
     <!-- How It Works Section -->
     <section class="container" id="how" style="padding: 40px 0 60px;">
-      <h2 style="font-size:32px; font-weight:900; text-align:center; margin:0 0 40px;" class="animate-in">How It Works</h2>
+      <h2 style="font-size:32px; font-weight:900; text-align:center; margin:0 0 40px;" class="animate-in">How It Works
+      </h2>
 
       <div class="how-it-works-grid">
 
@@ -192,7 +198,7 @@
         <div class="card animate-in delay-4">
           <div class="how-step-icon">4️⃣</div>
           <h3 class="how-step-title">Explore Insights</h3>
-          <p class="how-step-text">Charts, recommendations &amp; AI advice</p>
+          <p class="how-step-text">Charts, recommendations</p>
         </div>
 
       </div>
@@ -202,7 +208,8 @@
     <section class="container" style="text-align:center; padding:40px 0 60px;">
       <div class="card animate-in" style="padding:48px; text-align:center;">
         <h2 style="font-size:28px; font-weight:900; margin:0 0 12px;">Ready to predict your startup's success?</h2>
-        <p style="color:var(--slate-500); font-size:16px; margin:0 0 28px;">Join VentureVerse and make data-driven decisions before you launch.</p>
+        <p style="color:var(--slate-500); font-size:16px; margin:0 0 28px;">Join VentureVerse and make data-driven
+          decisions before you launch.</p>
         <a href="{{ url_for('signup') }}" class="btn-primary">Create Free Account &rarr;</a>
       </div>
     </section>
@@ -235,4 +242,5 @@
     }
   </script>
 </body>
+
 </html>

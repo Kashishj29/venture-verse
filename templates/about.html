@@ -1,6 +1,7 @@
 <!-- Template Page -->
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -8,6 +9,7 @@
   <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}?v=3">
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
+
 <body>
 
   <!-- Shared navigation bar -->
@@ -34,11 +36,14 @@
         <div class="about-content">
           <p>
             Analyses early-stage indicators — funding, investors, network,
-            milestones, industry, location — to estimate success probability
+            milestones, industry, Ecosystem — to estimate success probability
             before market entry.
           </p>
           <p>Free and open-access, built on real Crunchbase data.</p>
-          <p class="note" style="margin-top:16px;">⚠️ <strong>Dataset Notice:</strong> VentureVerse's model was trained on US-based Crunchbase startup data (pre-2014). Predictions are indicative for non-US users. Ecosystem categories are used to approximate global startup environments.</p>
+          <p class="note" style="margin-top:16px;">⚠️ <strong>Dataset Notice:</strong> VentureVerse's model was trained
+            on US-based Kaggle startup data Prediction (pre-2014). Predictions are indicative for non-US users.
+            Ecosystem
+            categories are used to approximate global startup environments.</p>
         </div>
       </div>
 
@@ -84,10 +89,8 @@
 
           <!-- Developer photo + name -->
           <div class="dev-profile">
-            <img src="{{ url_for('static', filename='Kashish_jadhav.jpeg') }}"
-                 alt="Kashish Jadhav"
-                 class="dev-avatar"
-                 style="object-fit: cover; background: none; border: 2px solid var(--primary-100);">
+            <img src="{{ url_for('static', filename='Kashish_jadhav.jpeg') }}" alt="Kashish Jadhav" class="dev-avatar"
+              style="object-fit: cover; background: none; border: 2px solid var(--primary-100);">
             <div class="dev-info">
               <h3>Kashish Jadhav</h3>
               <p class="dev-role">BSc Computer Science</p>
@@ -122,4 +125,5 @@
   </main>
 
 </body>
+
 </html>

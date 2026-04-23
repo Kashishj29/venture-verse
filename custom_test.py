@@ -433,8 +433,8 @@ try:
 
     # Calculate expected values by hand:
     expected_log_funding = round(np.log1p(1_000_000), 3)   # ≈ 13.816
-    expected_avg_per_round = 500_000.0                      # 1,000,000 ÷ 2
-    expected_duration = 2.0                                  # 3 − 1
+    expected_avg_funding_per_round = 500_000.0              # 1,000,000 ÷ 2
+    expected_funding_duration = 2.0                          # 3 − 1
 
     # Get actual values from the DataFrame
     actual_log = round(float(df["log_funding"].iloc[0]), 3)
@@ -443,14 +443,14 @@ try:
 
     passed = (
         actual_log == expected_log_funding
-        and actual_avg == expected_avg_per_round
-        and actual_dur == expected_duration
+        and actual_avg == expected_avg_funding_per_round
+        and actual_dur == expected_funding_duration
     )
     record("UT02", "build_input_df() computes log_funding and avg_funding_per_round",
            passed,
            note=(f"log_funding={actual_log} (exp {expected_log_funding})  |  "
-                 f"avg_per_round={actual_avg} (exp {expected_avg_per_round})  |  "
-                 f"duration={actual_dur} (exp {expected_duration})"))
+                 f"avg_funding_per_round={actual_avg} (exp {expected_avg_funding_per_round})  |  "
+                 f"funding_duration={actual_dur} (exp {expected_funding_duration})"))
 except Exception as e:
     record("UT02", "build_input_df() computes log_funding and avg_funding_per_round", False, str(e))
 
